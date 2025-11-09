@@ -1,0 +1,104 @@
+.root {
+    -fx-background-color: #f4f4f4;
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* 🔹 Barra superior */
+.top-icons {
+    -fx-alignment: TOP_RIGHT;
+    -fx-spacing: 6;
+    -fx-padding: 6 10 0 0;
+}
+
+/* 🔹 Caja invisible clicable para íconos */
+.icon-box {
+    -fx-padding: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-background-color: transparent;
+}
+.icon-box:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.08);
+}
+.window-icon {
+    -fx-opacity: 0.85;
+}
+.window-icon:hover {
+    -fx-opacity: 1;
+}
+
+/* 🔹 Alinear formulario al lado izquierdo */
+.center > VBox {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 18;
+    -fx-padding: 10 30 20 60;
+}
+
+/* 🔹 Contenedor del icono y título centrado */
+.icon-user-box {
+    -fx-alignment: center;
+    -fx-padding: 0 0 10 0;
+}
+.title-box {
+    -fx-alignment: center;
+    -fx-padding: 0 0 20 0;
+}
+
+/* 🔹 Etiquetas */
+.field-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #444;
+    -fx-font-weight: 600;
+}
+
+/* 🔹 Campos tipo línea */
+.line-field {
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-border-color: #777;
+    -fx-font-size: 15px;
+    -fx-text-fill: #222;
+    -fx-pref-width: 280;
+    -fx-max-width: 280;
+    -fx-alignment: center-left;
+    -fx-padding: 6 2 4 2;
+}
+.line-field:focused {
+    -fx-border-color: #1976D2;
+    -fx-border-width: 0 0 1.8 0;
+}
+.line-field:hover {
+    -fx-border-color: #4a90e2;
+}
+
+/* 🔹 Ícono del ojo */
+.eye-icon {
+    -fx-cursor: hand;
+    -fx-opacity: 0.8;
+    -fx-translate-y: 3;
+}
+.eye-icon:hover {
+    -fx-opacity: 1;
+}
+
+/* 🔹 Botón Entrar */
+.login-button {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 10 35;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+.login-button:hover {
+    -fx-background-color: #1565C0;
+}
+
+/* 🔹 Logo izquierdo */
+.left VBox {
+    -fx-alignment: CENTER;
+    -fx-background-color: #fff;
+}

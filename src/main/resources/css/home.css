@@ -1,0 +1,188 @@
+/* ==== VARIABLES ELEGANTES ==== */
+.root {
+    -fx-light-bg: #ffffff;
+    -fx-card-bg: #ffffff;
+    -fx-border-light: #e2e8f0;
+    -fx-text-muted: #64748b;
+    -fx-primary: #3b82f6;
+    -fx-accent: #f59e0b;
+}
+
+/* ==== BOTONES DE VENTANA ELEGANTES ==== */
+.elegant-window-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cbd5e1;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-transition: all 0.2s ease;
+}
+.elegant-window-btn:hover {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-text-fill: #ffffff;
+}
+
+.elegant-window-btn-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cbd5e1;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-transition: all 0.2s ease;
+}
+.elegant-window-btn-close:hover {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+}
+
+/* ==== BOTONES PRINCIPALES ELEGANTES ==== */
+.elegant-btn-primary {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.2), 8, 0, 0, 2);
+    -fx-transition: all 0.3s ease;
+}
+.elegant-btn-primary:hover {
+    -fx-background-color: #2563eb;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.3), 12, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+.elegant-btn-primary:pressed {
+    -fx-background-color: #1d4ed8;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.1), 4, 0, 0, 1);
+    -fx-translate-y: 0;
+}
+
+.elegant-btn-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748b;
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+    -fx-background-radius: 7;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1;
+    -fx-border-radius: 7;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
+}
+.elegant-btn-secondary:hover {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #94a3b8;
+    -fx-text-fill: #475569;
+    -fx-translate-y: -1;
+}
+.elegant-btn-secondary:pressed {
+    -fx-background-color: #f1f5f9;
+    -fx-translate-y: 0;
+}
+
+.elegant-btn-accent {
+    -fx-background-color: #f59e0b;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-font-size: 11px;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.2), 8, 0, 0, 2);
+    -fx-transition: all 0.3s ease;
+}
+.elegant-btn-accent:hover {
+    -fx-background-color: #d97706;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.3), 12, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+.elegant-btn-accent:pressed {
+    -fx-background-color: #b45309;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.1), 4, 0, 0, 1);
+    -fx-translate-y: 0;
+}
+
+/* ==== COMBOBOX ELEGANTE ==== */
+.elegant-combo {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 7;
+    -fx-background-radius: 7;
+    -fx-padding: 0 12;
+    -fx-font-size: 12px;
+    -fx-font-family: 'Segoe UI';
+    -fx-text-fill: #1e293b;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+}
+.elegant-combo:hover {
+    -fx-border-color: #94a3b8;
+}
+.elegant-combo:focused {
+    -fx-border-color: #3b82f6;
+    -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.1), 6, 0, 0, 1);
+}
+
+/* Estilo del texto del prompt */
+.elegant-combo .text-input {
+    -fx-text-fill: #64748b;
+}
+.elegant-combo .arrow-button {
+    -fx-background-color: transparent;
+}
+.elegant-combo .arrow {
+    -fx-background-color: #64748b;
+}
+
+/* ==== SCROLLBAR PERSONALIZADO ==== */
+.combo-box-popup .list-view {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 12, 0, 0, 3);
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-padding: 10 12;
+    -fx-border-color: transparent;
+    -fx-background-radius: 4;
+    -fx-font-family: 'Segoe UI';
+    -fx-font-size: 12px;
+    -fx-text-fill: #1e293b;
+    -fx-background-color: transparent;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #f1f5f9;
+    -fx-text-fill: #3b82f6;
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+}
+
+/* ==== ANIMACIONES SUTILES ==== */
+@keyframes fadeIn {
+    from { -fx-opacity: 0; }
+    to { -fx-opacity: 1; }
+}
+
+@keyframes spin {
+    from { -fx-rotate: 0; }
+    to { -fx-rotate: 360; }
+}
+
+/* Spinner animation */
+StackPane > Circle:stroke-#3b82f6 {
+    -fx-animation: spin 1.5s linear infinite;
+}

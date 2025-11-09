@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="views.controllers.LoginController"
+            prefWidth="850" prefHeight="520"
+            stylesheets="@/css/login.css">
+
+    <!-- 🔹 Lado Izquierdo: LOGO -->
+    <left>
+        <VBox alignment="CENTER"
+              prefWidth="360"
+              style="-fx-background-color: #ffffff;">
+            <ImageView fx:id="imgLogo" fitWidth="260" fitHeight="260" />
+        </VBox>
+    </left>
+
+    <!-- 🔹 Lado Derecho: FORMULARIO -->
+    <center>
+        <VBox alignment="CENTER_LEFT" spacing="20">
+            <padding>
+                <Insets top="10" right="30" bottom="20" left="50" />
+            </padding>
+
+            <!-- 🔹 Barra superior con cajas clicables -->
+            <HBox alignment="TOP_RIGHT" spacing="8" styleClass="top-icons">
+                <StackPane fx:id="btnMinimizarBox" styleClass="icon-box">
+                    <ImageView fx:id="btnMinimizar" fitWidth="18" fitHeight="18" styleClass="window-icon" />
+                </StackPane>
+                <StackPane fx:id="btnCerrarBox" styleClass="icon-box">
+                    <ImageView fx:id="btnCerrar" fitWidth="18" fitHeight="18" styleClass="window-icon" />
+                </StackPane>
+            </HBox>
+
+            <!-- 🔹 Icono y título centrados -->
+            <VBox alignment="CENTER" spacing="8" styleClass="icon-user-box">
+                <ImageView fx:id="iconUser" fitWidth="85" fitHeight="85" />
+                <Label text="INICIAR SESIÓN"
+                       style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #222;" />
+            </VBox>
+
+            <!-- Campo Usuario -->
+            <VBox spacing="4" alignment="CENTER_LEFT">
+                <Label text="Usuario" styleClass="field-label" />
+                <TextField fx:id="txtUsuario"
+                           promptText="Ingrese su usuario"
+                           styleClass="line-field" />
+            </VBox>
+
+            <!-- Campo Contraseña -->
+            <VBox spacing="4" alignment="CENTER_LEFT">
+                <Label text="Contraseña" styleClass="field-label" />
+                <HBox alignment="CENTER_LEFT" spacing="5">
+                    <StackPane>
+                        <PasswordField fx:id="txtPassword"
+                                       promptText="Ingrese su contraseña"
+                                       styleClass="line-field" />
+                        <TextField fx:id="txtPasswordVisible"
+                                   promptText="Ingrese su contraseña"
+                                   styleClass="line-field" />
+                    </StackPane>
+                    <ImageView fx:id="iconVerPassword"
+                               fitWidth="22" fitHeight="22"
+                               styleClass="eye-icon" />
+                </HBox>
+            </VBox>
+
+            <Button fx:id="btnLogin"
+                    text="ENTRAR"
+                    onAction="#iniciarSesion"
+                    styleClass="login-button" />
+        </VBox>
+    </center>
+</BorderPane>

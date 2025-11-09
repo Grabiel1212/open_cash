@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.shape.*?>
+
+<AnchorPane fx:id="root" xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="views.controllers.HomeController"
+            stylesheets="@/css/home.css"
+            prefWidth="1000" prefHeight="550"
+            style="-fx-background-color: #ffffff;">
+
+    <!-- ===== CABECERA ELEGANTE ===== -->
+    <HBox fx:id="header" spacing="15"
+          AnchorPane.topAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+          style="-fx-background-color: #1e293b; -fx-padding: 12 25; -fx-alignment: CENTER_LEFT; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+        
+        <!-- Logo elegante -->
+        <StackPane>
+            <Rectangle width="32" height="32" arcWidth="6" arcHeight="6" fill="#3b82f6"/>
+            <ImageView fx:id="imgLogo" fitWidth="18" fitHeight="18" preserveRatio="true"/>
+        </StackPane>
+        
+        <VBox spacing="1">
+            <Text fx:id="lblTitulo" text="UTILMARKET" fill="white"
+                  style="-fx-font-size: 15px; -fx-font-weight: 700; -fx-font-family: 'Segoe UI';"/>
+            <Text text="SISTEMA DE CAJA" fill="#cbd5e1"
+                  style="-fx-font-size: 9px; -fx-font-weight: 500; -fx-font-family: 'Segoe UI';"/>
+        </VBox>
+        
+        <Pane HBox.hgrow="ALWAYS"/>
+        
+        <!-- Botones de ventana -->
+        <HBox spacing="6">
+            <Button fx:id="btnMinimizar" text="—" onAction="#minimizarVentana" styleClass="elegant-window-btn"/>
+            <Button fx:id="btnCerrar" text="✕" onAction="#cerrarVentana" styleClass="elegant-window-btn-close"/>
+        </HBox>
+    </HBox>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <VBox spacing="20" alignment="CENTER"
+          AnchorPane.topAnchor="60" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.bottomAnchor="20"
+          style="-fx-padding: 25 40;">
+
+        <!-- Título Principal -->
+        <VBox spacing="6" alignment="CENTER">
+            <Text text="APERTURA DE CAJA"
+                  style="-fx-font-size: 28px; -fx-font-weight: 800; -fx-fill: #1e293b; -fx-font-family: 'Segoe UI';"/>
+            <HBox spacing="8" alignment="CENTER">
+                <Rectangle width="35" height="2" fill="#3b82f6"/>
+                <Rectangle width="15" height="2" fill="#94a3b8"/>
+                <Rectangle width="35" height="2" fill="#3b82f6"/>
+            </HBox>
+        </VBox>
+
+        <!-- Subtítulo informativo -->
+        <Label text="Seleccione la impresora con la que trabajará al iniciar la caja registradora."
+               wrapText="true"
+               alignment="CENTER"
+               style="-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-padding: 0 100 5 100; -fx-font-family: 'Segoe UI';"/>
+
+        <!-- Contenedor horizontal para tarjeta y acciones -->
+        <HBox spacing="40" alignment="CENTER" style="-fx-padding: 10 0;">
+            
+            <!-- Tarjeta central elegante -->
+            <VBox alignment="CENTER" spacing="20"
+                  style="-fx-background-color: #ffffff; -fx-padding: 35; -fx-background-radius: 14; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 14; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 20, 0, 0, 6);"
+                  prefWidth="500">
+                
+                <!-- Icono -->
+                <StackPane>
+                    <Circle radius="45" fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="1"/>
+                    <ImageView fx:id="imgPrint" fitWidth="32" fitHeight="32" preserveRatio="true"/>
+                </StackPane>
+
+                <!-- Combo impresoras -->
+                <VBox spacing="6" alignment="CENTER_LEFT" prefWidth="380">
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <Rectangle width="10" height="1" fill="#3b82f6"/>
+                        <Label text="SELECCIONAR IMPRESORA" 
+                               style="-fx-font-size: 10px; -fx-text-fill: #64748b; -fx-font-weight: 600; -fx-font-family: 'Segoe UI';"/>
+                    </HBox>
+                    <ComboBox fx:id="cmbImpresoras" prefWidth="380" prefHeight="42"
+                              promptText="Seleccione una impresora disponible"
+                              styleClass="elegant-combo"/>
+                </VBox>
+
+                <!-- Botones de acción -->
+                <HBox spacing="10" alignment="CENTER">
+                    <Button fx:id="btnRefrescar" text="ACTUALIZAR"
+                            onAction="#refrescarImpresoras"
+                            prefWidth="130" prefHeight="38"
+                            styleClass="elegant-btn-secondary"/>
+
+                    <Button fx:id="btnSeleccionar" text="CONFIRMAR"
+                            onAction="#seleccionarImpresora"
+                            prefWidth="130" prefHeight="38"
+                            styleClass="elegant-btn-primary"/>
+                </HBox>
+            </VBox>
+
+            <!-- Sección lateral derecha -->
+            <VBox spacing="20" alignment="CENTER" prefWidth="300">
+                
+                <!-- Sección contraseña -->
+                <VBox spacing="12" alignment="CENTER" 
+                      style="-fx-background-color: #f8fafc; -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 12;">
+                    <VBox spacing="8" alignment="CENTER">
+                        <StackPane>
+                            <Circle radius="18" fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="1"/>
+                            <ImageView fx:id="imgUpdate" fitWidth="12" fitHeight="12" preserveRatio="true"/>
+                        </StackPane>
+                        <Label text="Actualizar Contraseña" 
+                               style="-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-weight: 600; -fx-font-family: 'Segoe UI';"/>
+                        <Label text="Cambie su contraseña antes de abrir caja"
+                               wrapText="true" alignment="CENTER"
+                               style="-fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-font-family: 'Segoe UI';"/>
+                    </VBox>
+                    <Button fx:id="btnActualizarContraseña" text="ACTUALIZAR"
+                            onAction="#actualizarContraseña"
+                            prefWidth="140" prefHeight="34"
+                            styleClass="elegant-btn-accent"/>
+                </VBox>
+
+                <!-- Información adicional -->
+                <VBox spacing="8" alignment="CENTER"
+                      style="-fx-background-color: #f8fafc; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 10;">
+                    <Label text="💡 Información" 
+                           style="-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #475569; -fx-font-family: 'Segoe UI';"/>
+                    <Label text="Asegúrese de que la impresora esté conectada y encendida antes de seleccionarla."
+                           wrapText="true" alignment="CENTER"
+                           style="-fx-font-size: 10px; -fx-text-fill: #64748b; -fx-font-family: 'Segoe UI';"/>
+                </VBox>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- Carta de carga -->
+    <StackPane fx:id="loadingCard" visible="false"
+               AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+               style="-fx-background-color: rgba(255, 255, 255, 0.95);">
+        <VBox alignment="CENTER" spacing="20"
+              style="-fx-background-color: #ffffff; -fx-padding: 40; -fx-background-radius: 16; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 16; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 25, 0, 0, 8);">
+            
+            <!-- Spinner elegante -->
+            <StackPane>
+                <Circle radius="30" stroke="#e2e8f0" strokeWidth="2" fill="transparent"/>
+                <Circle radius="30" stroke="#3b82f6" strokeWidth="2" fill="transparent" 
+                        style="-fx-stroke-dash-array: 188.4; -fx-stroke-dash-offset: 47.1;"/>
+            </StackPane>
+
+            <VBox spacing="6" alignment="CENTER">
+                <Label text="BUSCANDO IMPRESORAS" 
+                       style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b; -fx-font-family: 'Segoe UI';"/>
+                <Label text="Espere mientras se cargan los dispositivos disponibles..." 
+                       style="-fx-font-size: 11px; -fx-text-fill: #64748b; -fx-font-family: 'Segoe UI';"/>
+            </VBox>
+        </VBox>
+    </StackPane>
+</AnchorPane>
