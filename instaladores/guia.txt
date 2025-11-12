@@ -1,0 +1,51 @@
+:: ============================================
+:: 💻  SCRIPT DE COMPILACIÓN Y EJECUCIÓN JAR
+:: ============================================
+:: Proyecto: OpenCash
+:: Autor: JGB Corporate
+:: Año: © 2025
+:: Descripción:
+::   Este script limpia el proyecto, genera el .jar
+::   y luego lo ejecuta guardando el log de salida.
+:: ============================================
+
+@echo off
+title OpenCash - Ejecutar Proyecto
+cd /d "%~dp0"
+
+:: --------------------------------------------
+:: 🔹 1. LIMPIAR Y COMPILAR EL PROYECTO
+:: --------------------------------------------
+echo 🔄 Limpiando proyecto Maven...
+mvn clean
+
+echo ⚙️  Compilando y generando archivo JAR...
+mvn package
+
+:: --------------------------------------------
+:: 🔹 2. CONFIGURAR VARIABLES DEL JDK
+:: --------------------------------------------
+:: Asegúrate de tener instalado el JDK 17 o 21
+set JAVA_HOME=C:\Program Files\Java\jdk-21
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+:: --------------------------------------------
+:: 🔹 3. NOMBRE DEL ARCHIVO JAR
+:: --------------------------------------------
+set JAR_NAME=utilsac-1.0-SNAPSHOT.jar
+
+:: --------------------------------------------
+:: 🔹 4. EJECUTAR EL PROGRAMA Y GUARDAR LOG
+:: --------------------------------------------
+echo 🚀 Iniciando OpenCash...
+java -jar "%JAR_NAME%" > log.txt 2>&1
+
+:: (Si deseas conservar logs anteriores usa ">>" en vez de ">")
+:: Ejemplo:
+:: java -jar "%JAR_NAME%" >> log.txt 2>&1
+
+:: --------------------------------------------
+:: 🔹 5. FINALIZAR / PAUSA PARA VER RESULTADO
+:: --------------------------------------------
+echo ✅ Ejecución finalizada. Revisa "log.txt" para detalles.
+pause

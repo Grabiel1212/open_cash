@@ -1,0 +1,32 @@
+⚙️ INSTALACIÓN DE MAVEN 3.9.11 EN WINDOWS
+
+1️⃣ DESCARGAR MAVEN
+Descargar desde:
+https://dlcdn.apache.org/maven/maven-3/3.9.11/binaries/apache-maven-3.9.11-bin.zip
+
+2️⃣ EXTRAER EL ARCHIVO
+Extraer en la siguiente ruta:
+C:\Program Files\Apache\Maven\apache-maven-3.9.11
+
+Dentro deberías ver:
+bin, boot, conf, lib, etc.
+
+3️⃣ CREAR VARIABLES DE ENTORNO
+
+A. Abrir Configuración:
+Inicio → “Editar variables de entorno del sistema” → Variables de entorno…
+
+B. Crear nueva variable del sistema:
+Nombre de la variable:
+MAVEN_HOME
+Valor de la variable:
+C:\Program Files\Apache\Maven\apache-maven-3.9.11
+
+C. Editar la variable Path:
+Agregar una nueva línea con:
+%MAVEN_HOME%\bin
+
+4️⃣ VERIFICAR INSTALACIÓN
+
+Abrir una nueva ventana de CMD y escribir:
+mvn -v
