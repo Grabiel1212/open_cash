@@ -1,16 +1,17 @@
 package model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
 
 public class Usuario {
+
+    public Usuario(Integer idusuario, String usuario, String password) {
+        this.idusuario = idusuario;
+        this.usuario = usuario;
+        this.password = password;
+    }
+
+    public Usuario() {
+    }
 
     private Integer idusuario;
     private String usuario;
@@ -18,6 +19,30 @@ public class Usuario {
 
     public Usuario(String usuario, String password) {
         this.usuario = usuario;
+        this.password = password;
+    }
+
+    public Integer getIdusuario() {
+        return idusuario;
+    }
+
+    public void setIdusuario(Integer idusuario) {
+        this.idusuario = idusuario;
+    }
+
+    public String getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
         this.password = password;
     }
 
