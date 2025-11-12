@@ -76,4 +76,12 @@
                     styleClass="login-button" />
         </VBox>
     </center>
+
+    <!-- 🔹 Firma inferior -->
+    <bottom>
+        <HBox alignment="CENTER" style="-fx-background-color: transparent;">
+            <Label text="© 2025 JGB Corporate"
+                   style="-fx-font-size: 12px; -fx-text-fill: #666;" />
+        </HBox>
+    </bottom>
 </BorderPane>
