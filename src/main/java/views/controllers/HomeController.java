@@ -337,7 +337,51 @@ public class HomeController {
         }
     }
 
-    private void abrirCaja() {
-        System.out.println("🔵 Función abrir caja ejecutada");
+   private void abrirCaja() {
+    try {
+        String impresoraSeleccionada = configManager.getImpresoraSeleccionada();
+        if (impresoraSeleccionada == null || impresoraSeleccionada.isEmpty()) {
+            System.out.println("⚠️ No hay impresora configurada.");
+            return;
+        }
+
+        javax.print.PrintService impresora = null;
+        for (javax.print.PrintService ps : javax.print.PrintServiceLookup.lookupPrintServices(null, null)) {
+            if (ps.getName().equalsIgnoreCase(impresoraSeleccionada)) {
+                impresora = ps;
+                break;
+            }
+        }
+
+        if (impresora == null) {
+            System.out.println("❌ No se encontró la impresora configurada: " + impresoraSeleccionada);
+            return;
+        }
+
+        // 🔸 Comando estándar ESC/POS para abrir cajón (PIN 2)
+        byte[] openDrawerCmd = new byte[]{
+            (byte) 27,   // ESC
+            (byte) 112,  // p
+            (byte) 0,    // pin 2
+            (byte) 25,   // tiempo ON
+            (byte) 250   // tiempo OFF
+        };
+
+        javax.print.DocPrintJob job = impresora.createPrintJob();
+        javax.print.SimpleDoc doc = new javax.print.SimpleDoc(
+                openDrawerCmd,
+                javax.print.DocFlavor.BYTE_ARRAY.AUTOSENSE,
+                null
+        );
+        job.print(doc, null);
+
+        System.out.println("✅ Comando enviado a la impresora para abrir caja: " + impresora.getName());
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        System.err.println("❌ Error al intentar abrir la caja: " + e.getMessage());
     }
+}
+
+
 }

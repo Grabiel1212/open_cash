@@ -7,15 +7,17 @@ import java.sql.SQLException;
 import helpers.MensajeHelper;
 
 public class ConeccionSql {
-    /*
-     * private static final String URL =
-     * "jdbc:mysql://192.168.1.100:3306/OPEN_CASH?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
-     * private static final String USER = "juan75";
-     * private static final String PASSWORD = "6666";
-     */
+    
+    private static final String URL = "jdbc:mysql://192.168.1.100:3306/OPEN_CASH?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+     private static final String USER = "juan75";
+    private static final String PASSWORD = "6666";
+    
+    /* 
     private static final String URL = "jdbc:mysql://localhost:3306/OPEN_CASH?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
     private static final String USER = "root";
     private static final String PASSWORD = "1212";
+
+    */
 
     static {
         try {
