@@ -5,83 +5,149 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="views.controllers.LoginController"
-            prefWidth="850" prefHeight="520"
-            stylesheets="@/css/login.css">
+<StackPane xmlns="http://javafx.com/javafx/17"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="views.controllers.LoginController"
+    prefWidth="860"
+    prefHeight="520"
+    stylesheets="@/css/login.css"
+    styleClass="root">
 
-    <!-- 🔹 Lado Izquierdo: LOGO -->
-    <left>
-        <VBox alignment="CENTER"
-              prefWidth="360"
-              style="-fx-background-color: #ffffff;">
-            <ImageView fx:id="imgLogo" fitWidth="260" fitHeight="260" />
-        </VBox>
-    </left>
+    <!-- IMAGEN DE FONDO -->
+    <ImageView fx:id="imgFondo"
+        fitWidth="860"
+        fitHeight="520"
+        preserveRatio="false"
+        mouseTransparent="true"
+        styleClass="background-image" />
 
-    <!-- 🔹 Lado Derecho: FORMULARIO -->
-    <center>
-        <VBox alignment="CENTER_LEFT" spacing="20">
-            <padding>
-                <Insets top="10" right="30" bottom="20" left="50" />
-            </padding>
+    <!-- CONTENIDO PRINCIPAL -->
+    <BorderPane prefWidth="860"
+        prefHeight="520">
 
-            <!-- 🔹 Barra superior con cajas clicables -->
-            <HBox alignment="TOP_RIGHT" spacing="8" styleClass="top-icons">
-                <StackPane fx:id="btnMinimizarBox" styleClass="icon-box">
-                    <ImageView fx:id="btnMinimizar" fitWidth="18" fitHeight="18" styleClass="window-icon" />
+        <!-- BOTONES SUPERIORES -->
+        <top>
+
+            <HBox alignment="CENTER_RIGHT"
+                spacing="6"
+                prefHeight="55"
+                minHeight="55"
+                maxHeight="55"
+                styleClass="top-icons">
+
+                <!-- BOTON MINIMIZAR -->
+                <StackPane fx:id="btnMinimizarBox"
+                    prefWidth="42"
+                    prefHeight="42"
+                    minWidth="42"
+                    minHeight="42"
+                    maxWidth="42"
+                    maxHeight="42"
+                    alignment="CENTER"
+                    styleClass="icon-box">
+
+                    <ImageView fx:id="btnMinimizar"
+                        fitWidth="16"
+                        fitHeight="16"
+                        preserveRatio="true" />
+
                 </StackPane>
-                <StackPane fx:id="btnCerrarBox" styleClass="icon-box">
-                    <ImageView fx:id="btnCerrar" fitWidth="18" fitHeight="18" styleClass="window-icon" />
+
+                <!-- BOTON CERRAR -->
+                <StackPane fx:id="btnCerrarBox"
+                    prefWidth="42"
+                    prefHeight="42"
+                    minWidth="42"
+                    minHeight="42"
+                    maxWidth="42"
+                    maxHeight="42"
+                    alignment="CENTER"
+                    styleClass="icon-box close-box">
+
+                    <ImageView fx:id="btnCerrar"
+                        fitWidth="16"
+                        fitHeight="16"
+                        preserveRatio="true" />
+
                 </StackPane>
+
             </HBox>
 
-            <!-- 🔹 Icono y título centrados -->
-            <VBox alignment="CENTER" spacing="8" styleClass="icon-user-box">
-                <ImageView fx:id="iconUser" fitWidth="85" fitHeight="85" />
-                <Label text="INICIAR SESIÓN"
-                       style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #222;" />
-            </VBox>
+        </top>
 
-            <!-- Campo Usuario -->
-            <VBox spacing="4" alignment="CENTER_LEFT">
-                <Label text="Usuario" styleClass="field-label" />
-                <TextField fx:id="txtUsuario"
-                           promptText="Ingrese su usuario"
-                           styleClass="line-field" />
-            </VBox>
+        <!-- FORMULARIO -->
+        <center>
 
-            <!-- Campo Contraseña -->
-            <VBox spacing="4" alignment="CENTER_LEFT">
-                <Label text="Contraseña" styleClass="field-label" />
-                <HBox alignment="CENTER_LEFT" spacing="5">
-                    <StackPane>
-                        <PasswordField fx:id="txtPassword"
-                                       promptText="Ingrese su contraseña"
-                                       styleClass="line-field" />
-                        <TextField fx:id="txtPasswordVisible"
-                                   promptText="Ingrese su contraseña"
-                                   styleClass="line-field" />
-                    </StackPane>
-                    <ImageView fx:id="iconVerPassword"
-                               fitWidth="22" fitHeight="22"
-                               styleClass="eye-icon" />
-                </HBox>
-            </VBox>
+            <HBox alignment="CENTER_RIGHT">
 
-            <Button fx:id="btnLogin"
-                    text="ENTRAR"
-                    onAction="#iniciarSesion"
-                    styleClass="login-button" />
-        </VBox>
-    </center>
+                <!-- ESPACIO IZQUIERDO -->
+                <Region prefWidth="390" />
 
-    <!-- 🔹 Firma inferior -->
-    <bottom>
-        <HBox alignment="CENTER" style="-fx-background-color: transparent;">
-            <Label text="© 2025 JGB Corporate"
-                   style="-fx-font-size: 12px; -fx-text-fill: #666;" />
-        </HBox>
-    </bottom>
-</BorderPane>
+                <!-- PANEL LOGIN -->
+                <VBox alignment="CENTER"
+                    spacing="16"
+                    prefWidth="360"
+                    maxWidth="360"
+                    styleClass="login-panel">
+
+                    <!-- ICONO USUARIO -->
+                    <ImageView fx:id="iconUser"
+                        fitWidth="80"
+                        fitHeight="80"
+                        preserveRatio="true" />
+
+                    <!-- TITULO -->
+                    <Label text="INICIAR SESIÓN"
+                        styleClass="login-title" />
+
+                    <!-- CAMPO DNI -->
+                    <VBox spacing="6"
+                        alignment="CENTER_LEFT"
+                        maxWidth="Infinity">
+
+                        <Label text="DNI"
+                            styleClass="field-label" />
+
+                        <TextField fx:id="txtDni"
+                            promptText="Ingrese su número de DNI"
+                            maxWidth="Infinity"
+                            styleClass="dni-field" />
+
+                    </VBox>
+
+                    <!-- BOTON LOGIN -->
+                    <Button fx:id="btnLogin"
+                        text="ENTRAR"
+                        onAction="#iniciarSesion"
+                        defaultButton="true"
+                        maxWidth="Infinity"
+                        styleClass="login-button" />
+
+                </VBox>
+
+                <!-- ESPACIO DERECHO -->
+                <Region prefWidth="35" />
+
+            </HBox>
+
+        </center>
+
+        <!-- FOOTER -->
+        <bottom>
+
+            <HBox alignment="CENTER">
+
+                <padding>
+                    <Insets bottom="12" />
+                </padding>
+
+                <Label text="© 2025 Utilmarket | Todos los derechos reservados"
+                    styleClass="footer-text" />
+
+            </HBox>
+
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

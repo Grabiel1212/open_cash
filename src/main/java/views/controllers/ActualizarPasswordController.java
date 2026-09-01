@@ -1,9 +1,9 @@
 package views.controllers;
 
-import helpers.MensajeHelper;
 import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.PauseTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -22,9 +22,8 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 import javafx.util.Duration;
-import services.ConfigManagerDB;
+import services.cash.ConfigManagerDB;
 import views.icons.Icons;
 
 public class ActualizarPasswordController {
@@ -43,92 +42,110 @@ public class ActualizarPasswordController {
     private ProgressIndicator progressIndicator;
     @FXML
     private Label lblMensaje;
+    @FXML
+    private Label lblTitulo;
+    @FXML
+    private Label lblTextoCampo;
 
     private boolean passwordVisible = false;
     private Timeline progressTimeline;
+    private boolean esCreacion = false;
+    private Stage stageActual; // <-- NUEVO
 
     @FXML
     public void initialize() {
-        // Configurar iconos
-        Icons.setImageIcons(imgLogo, "update.png", 20);
-        Icons.setImageIcons(imgPasswordIcon, "pass.png", 20);
+        Icons.setImageIcons(imgLogo, "icons/", "update.png", 20);
+        Icons.setImageIcons(imgPasswordIcon, "icons/", "pass.png", 20);
 
-        // Efecto de aparición suave
         FadeTransition ft = new FadeTransition(Duration.millis(350), root);
         ft.setFromValue(0);
         ft.setToValue(1);
         ft.play();
 
-        // Configurar eventos
         btnCerrar.setOnAction(e -> cerrar());
         btnActualizar.setOnAction(e -> actualizar());
         btnTogglePassword.setOnAction(e -> togglePasswordVisibility());
 
-        // Aplicar animación al botón de actualizar
         setupButtonAnimation();
-
-        // Ocultar progress indicator inicialmente
         progressIndicator.setVisible(false);
+
+        configurarTextoBoton();
+    }
+
+    public void setStage(Stage stage) {
+        this.stageActual = stage;
+    }
+
+    public boolean isModoCreacion() {
+        return esCreacion;
+    }
+
+    private void configurarTextoBoton() {
+        new Thread(() -> {
+            ConfigManagerDB configManager = new ConfigManagerDB();
+            boolean tienePin = configManager.tienePin();
+            Platform.runLater(() -> {
+                if (tienePin) {
+                    btnActualizar.setText("Actualizar PIN");
+                    lblTitulo.setText("Actualizar PIN");
+                    lblTextoCampo.setText("Ingresa tu nuevo PIN:");
+                    lblMensaje.setText("Ingresa el nuevo PIN para reemplazar el actual.");
+                    btnCerrar.setVisible(true);
+                    btnCerrar.setManaged(true);
+                } else {
+                    btnActualizar.setText("Crear PIN");
+                    lblTitulo.setText("Crear PIN");
+                    lblTextoCampo.setText("Crea tu PIN:");
+                    lblMensaje.setText("Debes crear tu PIN para poder continuar.");
+                    btnCerrar.setVisible(false);
+                    btnCerrar.setManaged(false);
+                }
+            });
+        }).start();
     }
 
     private void togglePasswordVisibility() {
         passwordVisible = !passwordVisible;
-
         if (passwordVisible) {
-            // Mostrar contraseña
             txtPasswordVisible.setText(txtPassword.getText());
             txtPasswordVisible.setVisible(true);
             txtPasswordVisible.setManaged(true);
             txtPassword.setVisible(false);
             txtPassword.setManaged(false);
-            Icons.setImageIcons(imgPasswordIcon, "pass.png", 20);
+            Icons.setImageIcons(imgPasswordIcon, "icons/", "pass.png", 20);
         } else {
-            // Ocultar contraseña
             txtPassword.setText(txtPasswordVisible.getText());
             txtPassword.setVisible(true);
             txtPassword.setManaged(true);
             txtPasswordVisible.setVisible(false);
             txtPasswordVisible.setManaged(false);
-            Icons.setImageIcons(imgPasswordIcon, "pass.png", 20);
+            Icons.setImageIcons(imgPasswordIcon, "icons/", "pass.png", 20);
         }
     }
 
     private void cerrar() {
+        ConfigManagerDB configManager = new ConfigManagerDB();
+
+        // Si el empleado no tiene PIN, NO permitir cerrar
+        if (!configManager.tienePin()) {
+            mostrarAlerta(Alert.AlertType.WARNING,
+                    "PIN obligatorio",
+                    "Debes crear tu PIN para poder continuar.");
+            return;
+        }
+
+        // Si ya tiene PIN, cerrar normalmente
         Platform.runLater(() -> {
-            try {
-                // Intenta obtener el Stage actual de forma segura
-                Stage stage = null;
-
-                if (root != null && root.getScene() != null) {
-                    stage = (Stage) root.getScene().getWindow();
-                } else {
-                    // Si el root no existe o fue destruido, busca el Stage activo
-                    stage = (Stage) Stage.getWindows().stream()
-                            .filter(Window::isShowing)
-                            .findFirst()
-                            .orElse(null);
+            if (stageActual != null) {
+                stageActual.close();
+            } else {
+                try {
+                    Stage stage = (Stage) root.getScene().getWindow();
+                    if (stage != null)
+                        stage.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-
-                if (stage == null) {
-                    System.err.println("⚠️ No se pudo encontrar la ventana para cerrar.");
-                    return;
-                }
-
-                // Aplica una animación de cierre si el root sigue disponible
-                if (root != null) {
-                    FadeTransition ft = new FadeTransition(Duration.millis(250), root);
-                    ft.setFromValue(1);
-                    ft.setToValue(0);
-                    Stage finalStage = stage;
-                    ft.setOnFinished(e -> finalStage.close());
-                    ft.play();
-                } else {
-                    stage.close();
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("⚠️ Error al intentar cerrar la ventana: " + e.getMessage());
             }
         });
     }
@@ -140,39 +157,27 @@ public class ActualizarPasswordController {
             mostrarAlerta(Alert.AlertType.WARNING, "Campo vacío", "Por favor, ingresa tu nueva contraseña.");
             return;
         }
-
         if (nueva.length() < 2) {
             mostrarAlerta(Alert.AlertType.WARNING, "Contraseña muy corta",
                     "La contraseña debe tener al menos 2 caracteres.");
             return;
         }
 
-        // Mostrar animación de carga
         mostrarAnimacionCarga();
 
         new Thread(() -> {
             try {
-                // 🔹 CREAR INSTANCIA DE CONFIGMANAGER Y ACTUALIZAR PIN REAL
                 ConfigManagerDB configManager = new ConfigManagerDB();
                 boolean actualizado = configManager.actualizarPin(nueva);
-
-                Thread.sleep(1500); // Pequeña pausa para la animación
+                Thread.sleep(1500);
 
                 Platform.runLater(() -> {
                     if (actualizado) {
                         mostrarAnimacionExito();
-                        MensajeHelper.info("PIN actualizado exitosamente para: " + configManager.getNombreCajero());
-
-                        new Thread(() -> {
-                            try {
-                                Thread.sleep(1000);
-                                Platform.runLater(this::cerrar);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }).start();
+                        PauseTransition pause = new PauseTransition(Duration.seconds(1));
+                        pause.setOnFinished(e -> cerrar());
+                        pause.play();
                     } else {
-                        // Si falla, mostrar error
                         progressIndicator.setVisible(false);
                         btnActualizar.setVisible(true);
                         mostrarAlerta(Alert.AlertType.ERROR, "Error",
@@ -200,7 +205,6 @@ public class ActualizarPasswordController {
                 new KeyFrame(Duration.seconds(1), new KeyValue(progressIndicator.rotateProperty(), 360)));
         rotationTimeline.setCycleCount(Timeline.INDEFINITE);
         rotationTimeline.play();
-
         progressTimeline = rotationTimeline;
     }
 
@@ -208,7 +212,6 @@ public class ActualizarPasswordController {
         if (progressTimeline != null) {
             progressTimeline.stop();
         }
-
         progressIndicator.setVisible(false);
 
         StackPane successPane = new StackPane();
@@ -225,12 +228,9 @@ public class ActualizarPasswordController {
         checkmark.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         checkmark.setStrokeLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
 
-        double startX = -10;
-        double startY = -5;
-        double midX = -3;
-        double midY = 5;
-        double endX = 10;
-        double endY = -8;
+        double startX = -10, startY = -5;
+        double midX = -3, midY = 5;
+        double endX = 10, endY = -8;
 
         MoveTo moveTo = new MoveTo(startX, startY);
         LineTo line1 = new LineTo(midX, midY);
@@ -276,21 +276,18 @@ public class ActualizarPasswordController {
             st.setToY(1.05);
             st.play();
         });
-
         btnActualizar.setOnMouseExited(e -> {
             ScaleTransition st = new ScaleTransition(Duration.millis(150), btnActualizar);
             st.setToX(1.0);
             st.setToY(1.0);
             st.play();
         });
-
         btnActualizar.setOnMousePressed(e -> {
             ScaleTransition st = new ScaleTransition(Duration.millis(100), btnActualizar);
             st.setToX(0.95);
             st.setToY(0.95);
             st.play();
         });
-
         btnActualizar.setOnMouseReleased(e -> {
             ScaleTransition st = new ScaleTransition(Duration.millis(100), btnActualizar);
             st.setToX(1.0);

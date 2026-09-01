@@ -3,12 +3,12 @@ package test;
 import java.sql.Connection;
 
 import helpers.MensajeHelper;
-import util.ConeccionSql;
+import util.ConeccionPosgre;
 
 public class ProbarConecion {
 
     public static void main(String[] args) {
-        Connection con = ConeccionSql.getConnection();
+        Connection con = ConeccionPosgre.conectar();
 
         MensajeHelper.info("" + con);
     }

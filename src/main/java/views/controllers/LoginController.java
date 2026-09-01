@@ -1,3 +1,4 @@
+
 package views.controllers;
 
 import java.io.IOException;
@@ -7,158 +8,445 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
-import javafx.scene.media.AudioClip;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import model.Usuario;
-import services.UsuarioService;
+import model.Empleado;
+import services.sql.EmpleadoService;
+import services.text_vos.TextPeechService;
 import views.alerts.AlertHelper;
 import views.icons.Icons;
 
 public class LoginController {
 
-    @FXML
-    private ImageView imgLogo;
+        // =====================================================
+        // IMÁGENES
+        // =====================================================
 
-    @FXML
-    private ImageView iconUser;
+        @FXML
+        private ImageView iconUser;
 
-    @FXML
-    private ImageView btnCerrar;
+        @FXML
+        private ImageView btnCerrar;
 
-    @FXML
-    private ImageView btnMinimizar;
+        @FXML
+        private ImageView btnMinimizar;
 
-    @FXML
-    private StackPane btnCerrarBox;
+        // =====================================================
+        // BOTONES DE VENTANA
+        // =====================================================
 
-    @FXML
-    private StackPane btnMinimizarBox;
+        @FXML
+        private StackPane btnCerrarBox;
 
-    @FXML
-    private ImageView iconVerPassword;
+        @FXML
+        private StackPane btnMinimizarBox;
 
-    @FXML
-    private TextField txtUsuario;
+        @FXML
+        private ImageView imgFondo;
 
-    @FXML
-    private PasswordField txtPassword;
+        // =====================================================
+        // DNI
+        // =====================================================
 
-    @FXML
-    private TextField txtPasswordVisible;
+        @FXML
+        private TextField txtDni;
 
-    @FXML
-    private Button btnLogin;
+        // =====================================================
+        // BOTÓN LOGIN
+        // =====================================================
 
-    private boolean mostrandoPassword = false;
+        @FXML
+        private Button btnLogin;
 
-    private final UsuarioService usuarioService = new UsuarioService();
+        // =====================================================
+        // SERVICIO EMPLEADO
+        // =====================================================
 
-    @FXML
-    public void initialize() {
-        // Cargar íconos
-        Icons.setImageIcons(imgLogo, "logos.png", 250);
-        Icons.setImageIcons(iconUser, "user.png", 80);
-        Icons.setImageIcons(btnCerrar, "cancel.png", 50);
-        Icons.setImageIcons(btnMinimizar, "mini.png", 50);
-        Icons.setImageIcons(iconVerPassword, "pass.png", 25);
+        private final EmpleadoService empleadoService = new EmpleadoService();
 
-        txtPasswordVisible.setManaged(false);
-        txtPasswordVisible.setVisible(false);
+        // =====================================================
+        // EMPLEADO ACTUAL
+        // =====================================================
 
-        // Eventos de botones
-        btnCerrarBox.setOnMouseClicked(e -> ((Stage) btnCerrar.getScene().getWindow()).close());
-        btnMinimizarBox.setOnMouseClicked(e -> ((Stage) btnMinimizar.getScene().getWindow()).setIconified(true));
+        private Empleado empleadoActual;
 
-        iconVerPassword.setOnMouseClicked(e -> togglePasswordVisibility());
-    }
+        // =====================================================
+        // INITIALIZE
+        // =====================================================
 
-    private void togglePasswordVisibility() {
-        if (mostrandoPassword) {
-            txtPassword.setText(txtPasswordVisible.getText());
-            txtPasswordVisible.setManaged(false);
-            txtPasswordVisible.setVisible(false);
-            txtPassword.setManaged(true);
-            txtPassword.setVisible(true);
-            mostrandoPassword = false;
-        } else {
-            txtPasswordVisible.setText(txtPassword.getText());
-            txtPassword.setManaged(false);
-            txtPassword.setVisible(false);
-            txtPasswordVisible.setManaged(true);
-            txtPasswordVisible.setVisible(true);
-            mostrandoPassword = true;
+        @FXML
+        public void initialize() {
+
+                // =========================================
+                // CARGAR FONDO LOGIN
+                // =========================================
+
+                Image fondo = new Image(
+                                getClass().getResourceAsStream(
+                                                "/images/icons/fondo_login.jpg"));
+
+                imgFondo.setImage(fondo);
+
+                // -------------------------------------------------
+                // CARGAR ICONO USUARIO
+                // -------------------------------------------------
+
+                Icons.setImageIcons(
+                                iconUser, "icons/",
+                                "user_libro.jpg",
+                                80);
+
+                // -------------------------------------------------
+                // CARGAR BOTÓN CERRAR
+                // -------------------------------------------------
+
+                Icons.setImageIcons(
+                                btnCerrar, "icons/",
+                                "cancel.png",
+                                50);
+
+                // -------------------------------------------------
+                // CARGAR BOTÓN MINIMIZAR
+                // -------------------------------------------------
+
+                Icons.setImageIcons(
+                                btnMinimizar,
+                                "icons/",
+                                "minimizar.png",
+                                50);
+
+                // =================================================
+                // BOTÓN CERRAR
+                // =================================================
+
+                btnCerrarBox.setOnMouseClicked(e -> {
+
+                        Stage stage = (Stage) btnCerrar
+                                        .getScene()
+                                        .getWindow();
+
+                        stage.close();
+                });
+
+                // =================================================
+                // BOTÓN MINIMIZAR
+                // =================================================
+
+                btnMinimizarBox.setOnMouseClicked(e -> {
+
+                        Stage stage = (Stage) btnMinimizar
+                                        .getScene()
+                                        .getWindow();
+
+                        stage.setIconified(true);
+                });
+
+                // =================================================
+                // SOLO NÚMEROS EN DNI
+                // =================================================
+
+                txtDni.textProperty().addListener(
+                                (observable, oldValue, newValue) -> {
+
+                                        // Eliminar cualquier carácter que no sea número
+                                        if (!newValue.matches("\\d*")) {
+
+                                                txtDni.setText(
+                                                                newValue.replaceAll("[^\\d]", ""));
+                                        }
+
+                                        // Máximo 8 dígitos
+                                        if (txtDni.getText().length() > 8) {
+
+                                                txtDni.setText(
+                                                                txtDni.getText()
+                                                                                .substring(0, 8));
+                                        }
+                                });
         }
-    }
 
-    @FXML
-    private void iniciarSesion() {
-        String usuario = txtUsuario.getText().trim();
-        String password = mostrandoPassword ? txtPasswordVisible.getText() : txtPassword.getText().trim();
+        // =====================================================
+        // INICIAR SESIÓN
+        // =====================================================
 
-        if (usuario.isEmpty() || password.isEmpty()) {
-            AlertHelper.mostrar("Campos vacíos", "Por favor ingrese su usuario y contraseña.",
-                    AlertHelper.AlertType.WARNING);
-            return;
+        @FXML
+        private void iniciarSesion() {
+
+                // -------------------------------------------------
+                // OBTENER DNI
+                // -------------------------------------------------
+
+                String dni = txtDni.getText().trim();
+
+                // =================================================
+                // VALIDAR DNI VACÍO
+                // =================================================
+
+                if (dni.isEmpty()) {
+
+                        AlertHelper.mostrar(
+                                        "DNI requerido",
+                                        "Por favor, ingrese su número de DNI.",
+                                        AlertHelper.AlertType.WARNING);
+
+                        txtDni.requestFocus();
+
+                        return;
+                }
+
+                // =================================================
+                // VALIDAR 8 DÍGITOS
+                // =================================================
+
+                if (dni.length() != 8) {
+
+                        AlertHelper.mostrar(
+                                        "DNI incorrecto",
+                                        "El DNI debe tener exactamente 8 dígitos.",
+                                        AlertHelper.AlertType.WARNING);
+
+                        txtDni.requestFocus();
+
+                        return;
+                }
+
+                try {
+
+                        // =================================================
+                        // BUSCAR EMPLEADO EN POSTGRESQL
+                        // =================================================
+
+                        Empleado empleado = empleadoService.loginEmpleado(dni);
+
+                        // =================================================
+                        // EMPLEADO NO ENCONTRADO
+                        // =================================================
+
+                        if (empleado == null) {
+
+                                AlertHelper.mostrar(
+                                                "Acceso denegado",
+                                                "El DNI no está registrado o el empleado está inactivo.",
+                                                AlertHelper.AlertType.ERROR);
+
+                                txtDni.clear();
+
+                                txtDni.requestFocus();
+
+                                return;
+                        }
+
+                        // =================================================
+                        // GUARDAR EMPLEADO ACTUAL
+                        // =================================================
+
+                        empleadoActual = empleado;
+
+                        System.out.println(
+                                        "========================================");
+
+                        System.out.println(
+                                        "LOGIN CORRECTO");
+
+                        System.out.println(
+                                        "ID: " + empleado.getIdEmpleado());
+
+                        System.out.println(
+                                        "Nombre: " + empleado.getNombre());
+
+                        System.out.println(
+                                        "Apellido: " + empleado.getApellido());
+
+                        System.out.println(
+                                        "DNI: " + empleado.getDni());
+
+                        System.out.println(
+                                        "========================================");
+
+                        // =================================================
+                        // ABRIR HOME
+                        // =================================================
+
+                        cargarHome();
+
+                        // =================================================
+                        // REPRODUCIR BIENVENIDA CON PIPER
+                        // =================================================
+
+                        reproducirAudioBienvenida(empleado);
+
+                } catch (Exception e) {
+
+                        e.printStackTrace();
+
+                        AlertHelper.mostrar(
+                                        "Error de conexión",
+                                        "No se pudo conectar con la base de datos.",
+                                        AlertHelper.AlertType.ERROR);
+                }
         }
 
-        // 🔹 Crear objeto usuario con datos del formulario
-        Usuario user = new Usuario(usuario, password);
+        // =====================================================
+        // AUDIO DE BIENVENIDA
+        // =====================================================
 
-        try {
-            // 🔹 Validar usuario desde base de datos
-            Usuario encontrado = usuarioService.validarUsuario(user);
+        private void reproducirAudioBienvenida(Empleado empleado) {
 
-            if (encontrado != null) {
-                reproducirAudioBienvenida();
-                cargarHome();
-            } else {
-                AlertHelper.mostrar("Error", "Usuario o contraseña incorrectos.", AlertHelper.AlertType.ERROR);
-            }
-        } catch (Exception e) {
-            AlertHelper.mostrar("Error de conexión", "No se pudo conectar con la base de datos.",
-                    AlertHelper.AlertType.ERROR);
-            e.printStackTrace();
+                try {
+
+                        // =================================================
+                        // OBTENER DATOS DEL EMPLEADO
+                        // =================================================
+
+                        Long idEmpleado = empleado.getIdEmpleado();
+
+                        String nombre = empleado.getNombre();
+
+                        // =================================================
+                        // CONSTRUIR MENSAJE
+                        // =================================================
+
+                        String texto = "Bienvenido, "
+                                        + nombre
+                                        + ". Te damos la bienvenida a Utilmarket.";
+
+                        // =================================================
+                        // EJECUTAR AUDIO EN SEGUNDO PLANO
+                        // =================================================
+
+                        Thread hiloAudio = new Thread(() -> {
+
+                                try {
+
+                                        // =============================================
+                                        // INTENTAR REPRODUCIR AUDIO EXISTENTE
+                                        // =============================================
+
+                                        boolean audioExiste = TextPeechService.reproducirAudioEmpleado(
+                                                        idEmpleado);
+
+                                        // =============================================
+                                        // SI NO EXISTE, GENERAR AUDIO
+                                        // =============================================
+
+                                        if (!audioExiste) {
+
+                                                System.out.println(
+                                                                "🎤 Generando audio por primera vez para empleado ID: "
+                                                                                + idEmpleado);
+
+                                                TextPeechService.generarAudioEmpleado(
+                                                                idEmpleado,
+                                                                texto);
+
+                                                // =========================================
+                                                // REPRODUCIR AUDIO RECIÉN GENERADO
+                                                // =========================================
+
+                                                TextPeechService.reproducirAudioEmpleado(
+                                                                idEmpleado);
+                                        }
+
+                                } catch (Exception e) {
+
+                                        System.out.println(
+                                                        "❌ Error en hilo de audio:");
+
+                                        e.printStackTrace();
+                                }
+
+                        });
+
+                        // Evita que el hilo impida cerrar la aplicación
+                        hiloAudio.setDaemon(true);
+
+                        // Nombre del hilo
+                        hiloAudio.setName(
+                                        "Audio-Bienvenida-Empleado-" + idEmpleado);
+
+                        // Iniciar hilo
+                        hiloAudio.start();
+
+                } catch (Exception e) {
+
+                        System.out.println(
+                                        "❌ Error al reproducir bienvenida:");
+
+                        e.printStackTrace();
+                }
         }
-    }
 
-    private void reproducirAudioBienvenida() {
-        try {
-            String path = getClass().getResource("/audio/bienvenido.wav").toString();
-            AudioClip audio = new AudioClip(path);
-            audio.play();
-        } catch (Exception e) {
-            System.out.println("⚠️ No se pudo reproducir el audio: " + e.getMessage());
+        // =====================================================
+        // CARGAR HOME
+        // =====================================================
+
+        private void cargarHome() {
+                try {
+                        // =================================================
+                        // CARGAR FXML
+                        // =================================================
+                        FXMLLoader loader = new FXMLLoader(
+                                        getClass().getResource("/fx/home.fxml"));
+
+                        Parent root = loader.load();
+
+                        // =================================================
+                        // OBTENER CONTROLLER DEL HOME
+                        // =================================================
+                        HomeController homeController = loader.getController();
+
+                        // =================================================
+                        // PASAR EMPLEADO ACTUAL AL HOME
+                        // =================================================
+                        homeController.setEmpleadoActual(empleadoActual);
+
+                        // =================================================
+                        // CREAR STAGE
+                        // =================================================
+                        Stage homeStage = new Stage();
+
+                        // =================================================
+                        // CREAR SCENE
+                        // =================================================
+                        Scene scene = new Scene(root);
+                        homeStage.setScene(scene);
+
+                        // =================================================
+                        // VENTANA SIN DECORACIÓN
+                        // =================================================
+                        homeStage.initStyle(StageStyle.UNDECORATED);
+
+                        // =================================================
+                        // PASAR STAGE AL HOME
+                        // IMPORTANTE PARA MINIMIZAR/CERRAR/RESTAURAR
+                        // =================================================
+                        homeController.setPrimaryStage(homeStage);
+
+                        // =================================================
+                        // MOSTRAR HOME
+                        // =================================================
+                        homeStage.show();
+
+                        // =================================================
+                        // CERRAR LOGIN
+                        // =================================================
+                        Stage loginStage = (Stage) btnLogin
+                                        .getScene()
+                                        .getWindow();
+
+                        loginStage.close();
+
+                } catch (IOException e) {
+                        e.printStackTrace();
+
+                        AlertHelper.mostrar(
+                                        "Error",
+                                        "No se pudo cargar la ventana principal.",
+                                        AlertHelper.AlertType.ERROR);
+                }
         }
-    }
-
-    private void cargarHome() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/home.fxml"));
-            Parent root = loader.load();
-
-            HomeController homeController = loader.getController();
-
-            Stage homeStage = new Stage();
-            homeStage.setScene(new Scene(root));
-            homeStage.initStyle(StageStyle.UNDECORATED);
-
-            // 🔥 Asegurar que el stage esté completamente inicializado
-            homeStage.setOnShown(e -> {
-                homeController.setPrimaryStage(homeStage);
-            });
-
-            homeStage.show();
-
-            // Cerrar login
-            ((Stage) btnLogin.getScene().getWindow()).close();
-
-        } catch (IOException e) {
-            AlertHelper.mostrar("Error", "No se pudo cargar la ventana principal.", AlertHelper.AlertType.ERROR);
-        }
-    }
 }

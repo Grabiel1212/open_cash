@@ -1,387 +1,306 @@
 package views.controllers;
 
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
-import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.InputStream;
 
-import javax.imageio.ImageIO;
-
+import helpers.Avatar;
 import javafx.animation.FadeTransition;
-import javafx.animation.PauseTransition;
-import javafx.animation.RotateTransition;
-import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.print.Printer;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
-import services.ConfigManagerDB;
-import services.HotkeyManager;
+import model.Empleado;
+import model.Sucursal;
+import services.cash.ConfigManagerDB;
+import services.cash.HotkeyManager;
 import views.alerts.AlertHelper;
+import views.controllers.home.PrinterManager;
+import views.controllers.home.TrayManager;
 import views.icons.Icons;
 
 public class HomeController {
 
-    @FXML
-    private AnchorPane root;
-    @FXML
-    private StackPane loadingCard;
-    @FXML
-    private ImageView imgLogo, imgUpdate, imgPrint;
-    @FXML
-    private ComboBox<String> cmbImpresoras;
-    @FXML
-    private Button btnRefrescar, btnSeleccionar, btnActualizarContraseña;
-    @FXML
-    private Text lblTitulo;
+        @FXML
+        private AnchorPane root;
+        @FXML
+        private StackPane loadingCard;
+        @FXML
+        private ImageView imgLogo, imgUpdate, imgPrint;
+        @FXML
+        private ComboBox<String> cmbImpresoras;
+        @FXML
+        private Button btnRefrescar, btnSeleccionar, btnActualizarContraseña;
+        @FXML
+        private Text lblTitulo, lblEmpleado, lblSucursal;
+        @FXML
+        private ImageView imgFotoEmpleado;
 
-    private double xOffset = 0, yOffset = 0;
-    private ConfigManagerDB configManager;
-    private HotkeyManager hotkeyManager;
-    private TrayIcon trayIcon;
-    private Stage primaryStage;
+        private Stage primaryStage;
+        private double xOffset, yOffset;
 
-    @FXML
-    public void initialize() {
-        try {
-            System.out.println("🚀 INICIANDO HOME CONTROLLER...");
-            Platform.setImplicitExit(false); // 👈 clave para mantener app viva en bandeja
-            setupDragAndDrop();
-            loadIcons();
-            setupAnimations();
-            initializeServices();
-            cargarImpresoraGuardada();
-            refrescarImpresoras();
-            System.out.println("✅ HomeController LISTO");
-        } catch (Exception e) {
-            System.err.println("❌ Error en initialize: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+        private ConfigManagerDB configManager;
+        private HotkeyManager hotkeyManager;
+        private PrinterManager printerManager;
+        private TrayManager trayManager;
 
-    public void setPrimaryStage(Stage stage) {
-        this.primaryStage = stage;
-        System.out.println("🎯 Stage principal asignado");
+        @FXML
+        public void initialize() {
+                System.out.println("🚀 INICIANDO HOME CONTROLLER...");
+                Platform.setImplicitExit(false);
 
-        // Al cerrar ventana → minimizar en bandeja
-        primaryStage.setOnCloseRequest(e -> {
-            e.consume();
-            ocultarEnBandeja();
-        });
-    }
-
-    private void initializeServices() {
-        configManager = new ConfigManagerDB();
-        hotkeyManager = new HotkeyManager(configManager, this::abrirCaja);
-        hotkeyManager.startListening();
-    }
-
-    private void setupDragAndDrop() {
-        root.setOnMousePressed(e -> {
-            xOffset = e.getSceneX();
-            yOffset = e.getSceneY();
-        });
-        root.setOnMouseDragged(e -> {
-            if (primaryStage != null) {
-                primaryStage.setX(e.getScreenX() - xOffset);
-                primaryStage.setY(e.getScreenY() - yOffset);
-            }
-        });
-    }
-
-    private void loadIcons() {
-        Icons.setImageIcons(imgLogo, "logos.png", 20);
-        Icons.setImageIcons(imgUpdate, "update.png", 14);
-        Icons.setImageIcons(imgPrint, "print.png", 35);
-    }
-
-    private void setupAnimations() {
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(800), root);
-        fadeIn.setFromValue(0);
-        fadeIn.setToValue(1);
-        fadeIn.play();
-    }
-
-    // 🔴 Botón cerrar
-    @FXML
-    private void cerrarVentana() {
-        ocultarEnBandeja();
-    }
-
-    // 🔵 Botón minimizar
-    @FXML
-    private void minimizarVentana() {
-        if (primaryStage != null) {
-            primaryStage.setIconified(true);
-        }
-    }
-
-    // 🟡 Ocultar en bandeja (sin cerrar)
-    private void ocultarEnBandeja() {
-        try {
-            if (!SystemTray.isSupported()) {
-                System.out.println("⚠️ El SystemTray no es compatible con este sistema.");
-                return;
-            }
-
-            Platform.runLater(() -> {
-                if (primaryStage != null) {
-                    primaryStage.setIconified(true);
-                    primaryStage.hide(); // opcional, pero ayuda a liberar la UI
-                }
-            });
-
-            SystemTray tray = SystemTray.getSystemTray();
-
-            // Remover icono previo si existía
-            if (trayIcon != null) {
-                tray.remove(trayIcon);
-                trayIcon = null;
-            }
-
-            // Cargar icono desde recursos
-            BufferedImage image;
-            try (InputStream is = getClass().getResourceAsStream("/images/logos.png")) {
-                if (is == null) {
-                    image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-                } else {
-                    image = ImageIO.read(is);
-                }
-            }
-
-            trayIcon = new TrayIcon(image, "Mi aplicación - en segundo plano");
-            trayIcon.setImageAutoSize(true);
-
-            // 🖱️ Doble clic → mostrar ventana
-            trayIcon.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
-
-            // 📋 Menú contextual
-            PopupMenu menu = new PopupMenu();
-
-            MenuItem abrir = new MenuItem("Abrir");
-            abrir.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
-            menu.add(abrir);
-
-            MenuItem salir = new MenuItem("Salir");
-            salir.addActionListener(e -> {
-                System.out.println("🚪 Cerrando aplicación desde menú de bandeja...");
-                tray.remove(trayIcon);
-                Platform.exit();
-                System.exit(0);
-            });
-            menu.add(salir);
-
-            trayIcon.setPopupMenu(menu);
-            tray.add(trayIcon);
-
-            trayIcon.displayMessage(
-                    "Aplicación minimizada",
-                    "Sigue ejecutándose en segundo plano.",
-                    TrayIcon.MessageType.INFO);
-
-            System.out.println("🟡 Aplicación oculta en bandeja del sistema.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    // 🟢 Restaurar desde bandeja (funciona en Windows 11)
-    private void mostrarDesdeBandeja() {
-        Platform.runLater(() -> {
-            try {
-                if (primaryStage != null) {
-                    System.out.println("🟢 Restaurando ventana desde bandeja...");
-
-                    primaryStage.setIconified(false);
-                    primaryStage.show();
-                    primaryStage.toFront();
-                    primaryStage.requestFocus();
-
-                    // Forzar al frente con truco temporal
-                    Stage temp = new Stage();
-                    temp.setOpacity(0);
-                    temp.initStyle(StageStyle.UTILITY);
-                    temp.setAlwaysOnTop(true);
-                    temp.show();
-                    temp.toFront();
-                    temp.close();
-
-                    primaryStage.setAlwaysOnTop(true);
-                    primaryStage.setAlwaysOnTop(false);
-
-                    System.out.println("✅ Ventana restaurada correctamente.");
-                }
-            } catch (Exception e) {
-                System.err.println("❌ Error al restaurar ventana: " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
-
-    // --------------------- DEMÁS FUNCIONES ---------------------
-
-    private void cargarImpresoraGuardada() {
-        try {
-            String impresoraGuardada = configManager.getImpresoraSeleccionada();
-            if (impresoraGuardada != null && !impresoraGuardada.isEmpty()) {
-                cmbImpresoras.setValue(impresoraGuardada);
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error al cargar impresora: " + e.getMessage());
-        }
-    }
-
-    @FXML
-    private void refrescarImpresoras() {
-        try {
-            mostrarCarga();
-            PauseTransition delay = new PauseTransition(Duration.seconds(1.2));
-            delay.setOnFinished(e -> {
-                cargarImpresorasReales();
-                ocultarCarga();
+                setupDragAndDrop();
+                loadIcons();
+                setupAnimations();
+                initializeServices();
                 cargarImpresoraGuardada();
-            });
-            delay.play();
-        } catch (Exception e) {
-            System.err.println("❌ Error al refrescar impresoras: " + e.getMessage());
-        }
-    }
+                refrescarImpresoras();
 
-    private void mostrarCarga() {
-        loadingCard.setVisible(true);
-        loadingCard.setOpacity(0);
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(400), loadingCard);
-        fadeIn.setToValue(1);
-        fadeIn.play();
-
-        Circle spinnerCircle = (Circle) loadingCard.lookup(".spinner-circle");
-        if (spinnerCircle != null) {
-            RotateTransition rt = new RotateTransition(Duration.seconds(1.5), spinnerCircle);
-            rt.setByAngle(360);
-            rt.setCycleCount(FadeTransition.INDEFINITE);
-            rt.play();
-        }
-    }
-
-    private void ocultarCarga() {
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), loadingCard);
-        fadeOut.setToValue(0);
-        fadeOut.setOnFinished(e -> loadingCard.setVisible(false));
-        fadeOut.play();
-    }
-
-    private void cargarImpresorasReales() {
-        ObservableList<String> impresoras = FXCollections.observableArrayList();
-        Printer.getAllPrinters().forEach(p -> impresoras.add(p.getName()));
-        cmbImpresoras.setItems(impresoras);
-        cmbImpresoras.setPromptText(
-                impresoras.isEmpty() ? "No se encontraron impresoras" : "Seleccione una impresora...");
-    }
-
-    @FXML
-    private void seleccionarImpresora() {
-        try {
-            String seleccionada = cmbImpresoras.getValue();
-            if (seleccionada == null || seleccionada.isEmpty()) {
-                animarError(cmbImpresoras);
-                AlertHelper.mostrar("Advertencia", "Por favor seleccione una impresora.",
-                        AlertHelper.AlertType.WARNING);
-                return;
-            }
-            configManager.guardarImpresoraSeleccionada(seleccionada);
-            AlertHelper.mostrar("Listo", "Impresora predeterminada: " + seleccionada,
-                    AlertHelper.AlertType.INFO);
-        } catch (Exception e) {
-            AlertHelper.mostrar("Error", "No se pudo guardar la impresora seleccionada.",
-                    AlertHelper.AlertType.ERROR);
-        }
-    }
-
-    private void animarError(javafx.scene.Node node) {
-        TranslateTransition tt = new TranslateTransition(Duration.millis(100), node);
-        tt.setFromX(0);
-        tt.setByX(5);
-        tt.setCycleCount(3);
-        tt.setAutoReverse(true);
-        tt.play();
-    }
-
-    @FXML
-    private void actualizarContraseña() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/ActualizarPassword.fxml"));
-            StackPane panel = loader.load();
-            Stage modal = new Stage();
-            modal.initOwner(primaryStage);
-            modal.initStyle(StageStyle.UNDECORATED);
-            modal.setScene(new Scene(panel));
-            modal.showAndWait();
-        } catch (Exception e) {
-            AlertHelper.mostrar("Error", "No se pudo cargar la ventana.", AlertHelper.AlertType.ERROR);
-        }
-    }
-
-   private void abrirCaja() {
-    try {
-        String impresoraSeleccionada = configManager.getImpresoraSeleccionada();
-        if (impresoraSeleccionada == null || impresoraSeleccionada.isEmpty()) {
-            System.out.println("⚠️ No hay impresora configurada.");
-            return;
+                // ❌ ELIMINADO: verificarPinEmpleado();
+                System.out.println("✅ HomeController LISTO");
         }
 
-        javax.print.PrintService impresora = null;
-        for (javax.print.PrintService ps : javax.print.PrintServiceLookup.lookupPrintServices(null, null)) {
-            if (ps.getName().equalsIgnoreCase(impresoraSeleccionada)) {
-                impresora = ps;
-                break;
-            }
+        public void setEmpleadoActual(Empleado empleado) {
+                if (empleado == null)
+                        return;
+                configManager.setEmpleadoActual(empleado);
+                actualizarUIEmpleado();
         }
 
-        if (impresora == null) {
-            System.out.println("❌ No se encontró la impresora configurada: " + impresoraSeleccionada);
-            return;
+        private void verificarPinEmpleado() {
+                if (configManager == null || configManager.getEmpleadoActual() == null) {
+                        return;
+                }
+                new Thread(() -> {
+                        boolean tienePin = configManager.tienePin();
+                        Platform.runLater(() -> {
+                                if (!tienePin) {
+                                        System.out.println(
+                                                        "⚠️ El empleado no tiene PIN. Abriendo ventana para crearlo...");
+                                        abrirVentanaCrearPin();
+                                } else {
+                                        System.out.println("✅ El empleado ya tiene PIN.");
+                                }
+                        });
+                }).start();
         }
 
-        // 🔸 Comando estándar ESC/POS para abrir cajón (PIN 2)
-        byte[] openDrawerCmd = new byte[]{
-            (byte) 27,   // ESC
-            (byte) 112,  // p
-            (byte) 0,    // pin 2
-            (byte) 25,   // tiempo ON
-            (byte) 250   // tiempo OFF
-        };
+        private void abrirVentanaCrearPin() {
+                try {
+                        FXMLLoader loader = new FXMLLoader(
+                                        getClass().getResource("/fx/ActualizarPassword.fxml"));
+                        StackPane panel = loader.load();
+                        ActualizarPasswordController controller = loader.getController();
 
-        javax.print.DocPrintJob job = impresora.createPrintJob();
-        javax.print.SimpleDoc doc = new javax.print.SimpleDoc(
-                openDrawerCmd,
-                javax.print.DocFlavor.BYTE_ARRAY.AUTOSENSE,
-                null
-        );
-        job.print(doc, null);
+                        Stage modal = new Stage();
+                        modal.initOwner(primaryStage);
+                        modal.initStyle(StageStyle.UNDECORATED);
+                        modal.initModality(Modality.APPLICATION_MODAL);
 
-        System.out.println("✅ Comando enviado a la impresora para abrir caja: " + impresora.getName());
+                        controller.setStage(modal);
+                        modal.setScene(new Scene(panel));
+                        modal.showAndWait();
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        System.err.println("❌ Error al intentar abrir la caja: " + e.getMessage());
-    }
-}
+                        // Recargar empleado para actualizar el estado del PIN
+                        configManager.recargarEmpleado();
 
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        AlertHelper.mostrar("Error",
+                                        "No se pudo cargar la ventana para crear el PIN.",
+                                        AlertHelper.AlertType.ERROR);
+                }
+        }
 
+        private void actualizarUIEmpleado() {
+                if (lblEmpleado != null) {
+                        lblEmpleado.setText(configManager.getNombreCompletoEmpleado());
+                }
+                if (lblSucursal != null) {
+                        Sucursal suc = configManager.getSucursalActual();
+                        lblSucursal.setText(suc != null ? suc.getNombre() : "Sin sucursal");
+                }
+                cargarFotoEmpleado(configManager.getEmpleadoActual());
+        }
+
+        private void cargarFotoEmpleado(Empleado empleado) {
+                if (imgFotoEmpleado == null)
+                        return;
+
+                Image imagen = null;
+
+                // 1. Intentar cargar foto personal del empleado
+                if (empleado != null && empleado.getFoto() != null && !empleado.getFoto().isEmpty()) {
+                        try {
+                                File file = new File(empleado.getFoto());
+                                if (file.exists()) {
+                                        imagen = new Image(file.toURI().toString(), 44, 44, true, true);
+                                } else {
+                                        try (InputStream is = getClass().getResourceAsStream(empleado.getFoto())) {
+                                                if (is != null) {
+                                                        imagen = new Image(is, 44, 44, true, true);
+                                                }
+                                        }
+                                }
+                        } catch (Exception e) {
+                                System.err.println("Error cargando foto del empleado: " + e.getMessage());
+                        }
+                }
+
+                // 2. Si no hay foto o falló, intentar avatar aleatorio de DiceBear
+                if (imagen == null || imagen.isError()) {
+                        Avatar avatar = new Avatar();
+                        try {
+                                String url = avatar.getAvatarAleatorio();
+                                imagen = new Image(url, 44, 44, true, true);
+                                // Si falla, usar el avatar por defecto local
+                                if (imagen.isError()) {
+                                        imagen = avatar.getDefaultAvatar();
+                                }
+                        } catch (Exception e) {
+                                // Cualquier error, usar el default
+                                imagen = avatar.getDefaultAvatar();
+                        }
+                }
+
+                // 3. Fallback extremo (nunca debería ser null)
+                if (imagen == null) {
+                        imagen = new Avatar().getDefaultAvatar();
+                }
+
+                // Asignar la imagen y aplicar el clip circular
+                imgFotoEmpleado.setImage(imagen);
+                aplicarClipCircular();
+        }
+
+        private void aplicarClipCircular() {
+                double radius = Math.min(imgFotoEmpleado.getFitWidth(), imgFotoEmpleado.getFitHeight()) / 2;
+                Circle clip = new Circle(radius, radius, radius);
+                imgFotoEmpleado.setClip(clip);
+        }
+
+        private void initializeServices() {
+                configManager = new ConfigManagerDB();
+                actualizarUIEmpleado();
+                printerManager = new PrinterManager(configManager);
+                hotkeyManager = new HotkeyManager(configManager, this::abrirCaja);
+                hotkeyManager.startListening();
+        }
+
+        private void setupDragAndDrop() {
+                root.setOnMousePressed(e -> {
+                        xOffset = e.getSceneX();
+                        yOffset = e.getSceneY();
+                });
+                root.setOnMouseDragged(e -> {
+                        if (primaryStage != null) {
+                                primaryStage.setX(e.getScreenX() - xOffset);
+                                primaryStage.setY(e.getScreenY() - yOffset);
+                        }
+                });
+        }
+
+        private void loadIcons() {
+
+                Icons.setImageIcons(imgLogo, "logo/", "libro_logo.png", 35);
+                Icons.setImageIcons(imgUpdate, "icons/", "update.png", 14);
+                Icons.setImageIcons(imgPrint, "icons/", "print.png", 35);
+        }
+
+        private void setupAnimations() {
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(800), root);
+                fadeIn.setFromValue(0);
+                fadeIn.setToValue(1);
+                fadeIn.play();
+        }
+
+        @FXML
+        private void cerrarVentana() {
+                if (!configManager.tienePin()) {
+                        abrirVentanaCrearPin();
+                        return;
+                }
+                trayManager.ocultarEnBandeja();
+        }
+
+        @FXML
+        private void minimizarVentana() {
+                if (primaryStage != null) {
+                        primaryStage.setIconified(true);
+                }
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // NUEVO MÉTODO: SALIR DE LA APLICACIÓN
+        // ════════════════════════════════════════════════════════════════
+        @FXML
+        private void salir() {
+                AlertHelper.confirmar(
+                                "Salir",
+                                "¿Está seguro de que desea salir de la aplicación?",
+                                () -> Platform.exit());
+        }
+
+        @FXML
+        private void refrescarImpresoras() {
+                printerManager.refrescarImpresoras(cmbImpresoras, loadingCard);
+        }
+
+        @FXML
+        private void seleccionarImpresora() {
+                printerManager.seleccionarImpresora(cmbImpresoras);
+        }
+
+        @FXML
+        private void actualizarContraseña() {
+                try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/ActualizarPassword.fxml"));
+                        StackPane panel = loader.load();
+                        Stage modal = new Stage();
+                        modal.initOwner(primaryStage);
+                        modal.initStyle(StageStyle.UNDECORATED);
+                        modal.setScene(new Scene(panel));
+                        modal.showAndWait();
+                } catch (Exception e) {
+                        AlertHelper.mostrar("Error", "No se pudo cargar la ventana.", AlertHelper.AlertType.ERROR);
+                }
+        }
+
+        private void abrirCaja() {
+                printerManager.abrirCaja();
+        }
+
+        private void cargarImpresoraGuardada() {
+                printerManager.cargarImpresoraGuardada(cmbImpresoras);
+        }
+
+        // Verificación SOLO aquí (una sola vez)
+        public void setPrimaryStage(Stage stage) {
+                this.primaryStage = stage;
+                trayManager = new TrayManager(primaryStage);
+                trayManager.setHotkeyManager(hotkeyManager);
+
+                primaryStage.setOnCloseRequest(e -> {
+                        e.consume();
+                        if (!configManager.tienePin()) {
+                                abrirVentanaCrearPin();
+                        } else {
+                                trayManager.ocultarEnBandeja();
+                        }
+                });
+
+                // ✅ SOLO UNA VEZ
+                verificarPinEmpleado();
+        }
 }

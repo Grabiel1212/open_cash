@@ -7,9 +7,9 @@ import javafx.scene.image.ImageView;
 
 public class Icons {
 
-    public static void setButtonIcons(Button button, String iconName, double tamaño) {
+    public static void setButtonIcons(Button button, String url, String iconName, double tamaño) {
         try {
-            String path = "/images/" + iconName;
+            String path = "/images/" + url + iconName;
 
             var resource = Icons.class.getResource(path);
             if (resource == null) {
@@ -37,9 +37,9 @@ public class Icons {
         }
     }
 
-    public static void setImageToImageView(ImageView imageView, String iconName, double tamaño) {
+    public static void setImageToImageView(ImageView imageView, String url, String iconName, double tamaño) {
         try {
-            String path = "/images/" + iconName;
+            String path = "/images/" + url + iconName;
 
             var resource = Icons.class.getResource(path);
             if (resource == null) {
@@ -60,10 +60,10 @@ public class Icons {
         }
     }
 
-    public static void setImageIcons(ImageView view, String iconName, double size) {
+    public static void setImageIcons(ImageView view, String url, String iconName, double size) {
         try {
             // Ruta absoluta dentro de resources
-            String path = "/images/" + iconName;
+            String path = "/images/" + url + iconName;
             var resource = Icons.class.getResource(path);
 
             if (resource == null) {
