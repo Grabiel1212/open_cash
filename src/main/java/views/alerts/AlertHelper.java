@@ -107,4 +107,92 @@ public class AlertHelper {
             default -> "💡";
         };
     }
+
+    public static void confirmar(String titulo, String mensaje, Runnable accionConfirmar) {
+
+        Alert alert = new Alert(Alert.AlertType.NONE);
+
+        alert.setTitle(null);
+        alert.setHeaderText(null);
+
+        String colorBorde = "#f59e0b";
+
+        alert.getDialogPane().setStyle("""
+                    -fx-background-color: white;
+                    -fx-border-color: #f59e0b;
+                    -fx-border-width: 2;
+                    -fx-border-radius: 15;
+                    -fx-background-radius: 15;
+                    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 3);
+                    -fx-padding: 20;
+                """);
+
+        // Título
+        Label lblTitulo = new Label("⚠️ " + titulo);
+
+        lblTitulo.setStyle("""
+                    -fx-font-size: 18px;
+                    -fx-font-weight: bold;
+                    -fx-text-fill: #f59e0b;
+                """);
+
+        // Mensaje
+        Label lblMensaje = new Label(mensaje);
+
+        lblMensaje.setStyle("""
+                    -fx-font-size: 14px;
+                    -fx-text-fill: #444444;
+                """);
+
+        lblMensaje.setWrapText(true);
+
+        VBox contenido = new VBox(10, lblTitulo, lblMensaje);
+        contenido.setAlignment(Pos.CENTER_LEFT);
+
+        alert.getDialogPane().setContent(contenido);
+
+        // Botones
+        ButtonType btnSi = new ButtonType(
+                "Sí, salir",
+                ButtonBar.ButtonData.YES);
+
+        ButtonType btnNo = new ButtonType(
+                "Cancelar",
+                ButtonBar.ButtonData.NO);
+
+        alert.getButtonTypes().addAll(btnSi, btnNo);
+
+        // Botón Sí
+        Button si = (Button) alert.getDialogPane().lookupButton(btnSi);
+
+        si.setStyle("""
+                    -fx-background-color: #dc2626;
+                    -fx-text-fill: white;
+                    -fx-font-size: 13px;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-padding: 6 18;
+                """);
+
+        // Botón Cancelar
+        Button no = (Button) alert.getDialogPane().lookupButton(btnNo);
+
+        no.setStyle("""
+                    -fx-background-color: #e5e7eb;
+                    -fx-text-fill: #374151;
+                    -fx-font-size: 13px;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-padding: 6 18;
+                """);
+
+        // Resultado
+        alert.showAndWait().ifPresent(resultado -> {
+
+            if (resultado == btnSi) {
+                accionConfirmar.run();
+            }
+
+        });
+    }
 }
