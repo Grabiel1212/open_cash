@@ -24,19 +24,12 @@
             <version>2.2.2</version>
         </dependency>
 
-        <!-- MySQL -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>9.1.0</version> <!-- actualizado para Java 21 -->
-        </dependency>
 
-        <!-- Source: https://mvnrepository.com/artifact/org.postgresql/postgresql -->
+        <!-- PostgreSQL JDBC Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.13</version>
-            <scope>compile</scope>
         </dependency>
 
         <!-- Lombok -->
