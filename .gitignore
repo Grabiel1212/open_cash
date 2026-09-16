@@ -40,3 +40,10 @@ build/
 ### ARCHIVOS PESADOS ###
 
 audios_empleados/
+
+piper/
+openfx/
+instaladores/
+*.rar
+
+bin/
