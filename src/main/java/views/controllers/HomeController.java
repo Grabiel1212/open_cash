@@ -25,6 +25,8 @@ import model.Empleado;
 import model.Sucursal;
 import services.cash.ConfigManagerDB;
 import services.cash.HotkeyManager;
+import services.navegador.KeyFacilMonitorService;
+import services.navegador.VentaListenerService;
 import views.alerts.AlertHelper;
 import views.controllers.home.PrinterManager;
 import views.controllers.home.TrayManager;
@@ -47,6 +49,9 @@ public class HomeController {
         @FXML
         private ImageView imgFotoEmpleado;
 
+        @FXML
+        private Button btnAbrirNavegador;
+
         private Stage primaryStage;
         private double xOffset, yOffset;
 
@@ -54,6 +59,10 @@ public class HomeController {
         private HotkeyManager hotkeyManager;
         private PrinterManager printerManager;
         private TrayManager trayManager;
+
+        // 🔽 NUEVOS CAMPOS
+        private VentaListenerService ventaListenerService;
+        private KeyFacilMonitorService keyFacilMonitor;
 
         @FXML
         public void initialize() {
@@ -194,8 +203,21 @@ public class HomeController {
                 configManager = new ConfigManagerDB();
                 actualizarUIEmpleado();
                 printerManager = new PrinterManager(configManager);
+
+                // =====================================================
+                // HOTKEY (Ctrl+PIN+Win)
+                // =====================================================
                 hotkeyManager = new HotkeyManager(configManager, this::abrirCaja);
                 hotkeyManager.startListening();
+
+                // =====================================================
+                // MONITOR KEYFACIL (CDP, sin lag) — arranca al entrar al Home
+                // =====================================================
+                ventaListenerService = new VentaListenerService(this::abrirCaja);
+                keyFacilMonitor = new KeyFacilMonitorService(ventaListenerService);
+                keyFacilMonitor.start();
+
+                System.out.println("✅ Servicios listos: Hotkey + Monitor KeyFacil");
         }
 
         private void setupDragAndDrop() {
@@ -291,6 +313,9 @@ public class HomeController {
                 trayManager = new TrayManager(primaryStage);
                 trayManager.setHotkeyManager(hotkeyManager);
 
+                // 🔽 Inyectar shutdown compartido
+                trayManager.setShutdownCallback(this::shutdownServices);
+
                 primaryStage.setOnCloseRequest(e -> {
                         e.consume();
                         if (!configManager.tienePin()) {
@@ -300,7 +325,38 @@ public class HomeController {
                         }
                 });
 
-                // ✅ SOLO UNA VEZ
                 verificarPinEmpleado();
+        }
+
+        public void shutdownServices() {
+                try {
+                        if (keyFacilMonitor != null)
+                                keyFacilMonitor.stop();
+                        if (hotkeyManager != null)
+                                hotkeyManager.stopListening();
+                } catch (Exception e) {
+                        System.err.println("Error cerrando servicios: " + e.getMessage());
+                }
+        }
+
+        @FXML
+        private void abrirNavegador() {
+                try {
+                        if (keyFacilMonitor == null) {
+                                AlertHelper.mostrar("Error",
+                                                "El monitor de KeyFacil aún no está listo.",
+                                                AlertHelper.AlertType.WARNING);
+                                return;
+                        }
+
+                        // Lanzar en background para no bloquear la UI
+                        keyFacilMonitor.abrirNavegadorKeyFacil();
+
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        AlertHelper.mostrar("Error",
+                                        "No se pudo abrir el navegador: " + e.getMessage(),
+                                        AlertHelper.AlertType.ERROR);
+                }
         }
 }

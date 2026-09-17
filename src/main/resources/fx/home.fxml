@@ -71,6 +71,9 @@
             <Button fx:id="btnMinimizar" text="—" onAction="#minimizarVentana" styleClass="elegant-window-btn"/>
             <Button fx:id="btnSalir" text="⏻" onAction="#salir" styleClass="elegant-window-btn-exit"/>
             <Button fx:id="btnCerrar" text="✕" onAction="#cerrarVentana" styleClass="elegant-window-btn-close"/>
+
+            <Button fx:id="btnAbrirNavegador" text="🌐" onAction="#abrirNavegador"
+        styleClass="elegant-window-btn"/>
         </HBox>
     </HBox>
 

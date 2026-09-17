@@ -20,6 +20,13 @@ public class TrayManager {
     private HotkeyManager hotkeyManager;
     private TrayIcon trayIcon;
 
+    // 🔽 NUEVO
+    private Runnable shutdownCallback;
+
+    public void setShutdownCallback(Runnable shutdownCallback) {
+        this.shutdownCallback = shutdownCallback;
+    }
+
     public TrayManager(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
@@ -71,10 +78,18 @@ public class TrayManager {
 
             MenuItem salir = new MenuItem("Salir");
             salir.addActionListener(e -> {
-                System.out.println("🚪 Cerrando aplicación desde menú de bandeja...");
-                if (hotkeyManager != null) {
-                    hotkeyManager.stopListening();
+                System.out.println("🚪 Cerrando aplicación desde bandeja...");
+
+                // 🔽 Detener TODO
+                if (shutdownCallback != null) {
+                    try {
+                        shutdownCallback.run();
+                    } catch (Exception ignored) {
+                    }
                 }
+                if (hotkeyManager != null)
+                    hotkeyManager.stopListening();
+
                 tray.remove(trayIcon);
                 Platform.exit();
                 System.exit(0);
