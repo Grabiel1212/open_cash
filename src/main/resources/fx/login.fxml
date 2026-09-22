@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+    xmlns:fx="http://javafx.com/fxml/1"
+    fx:controller="views.controllers.LoginController"
+    prefWidth="860"
+    prefHeight="520"
+    stylesheets="@/css/login.css"
+    styleClass="root">
+
+    <!-- IMAGEN DE FONDO -->
+    <ImageView fx:id="imgFondo"
+        fitWidth="860"
+        fitHeight="520"
+        preserveRatio="false"
+        mouseTransparent="true"
+        styleClass="background-image" />
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <BorderPane prefWidth="860"
+        prefHeight="520">
+
+        <!-- BOTONES SUPERIORES -->
+        <top>
+
+            <HBox alignment="CENTER_RIGHT"
+                spacing="6"
+                prefHeight="55"
+                minHeight="55"
+                maxHeight="55"
+                styleClass="top-icons">
+
+                <!-- BOTON MINIMIZAR -->
+                <StackPane fx:id="btnMinimizarBox"
+                    prefWidth="42"
+                    prefHeight="42"
+                    minWidth="42"
+                    minHeight="42"
+                    maxWidth="42"
+                    maxHeight="42"
+                    alignment="CENTER"
+                    styleClass="icon-box">
+
+                    <ImageView fx:id="btnMinimizar"
+                        fitWidth="16"
+                        fitHeight="16"
+                        preserveRatio="true" />
+
+                </StackPane>
+
+                <!-- BOTON CERRAR -->
+                <StackPane fx:id="btnCerrarBox"
+                    prefWidth="42"
+                    prefHeight="42"
+                    minWidth="42"
+                    minHeight="42"
+                    maxWidth="42"
+                    maxHeight="42"
+                    alignment="CENTER"
+                    styleClass="icon-box close-box">
+
+                    <ImageView fx:id="btnCerrar"
+                        fitWidth="16"
+                        fitHeight="16"
+                        preserveRatio="true" />
+
+                </StackPane>
+
+            </HBox>
+
+        </top>
+
+        <!-- FORMULARIO -->
+        <center>
+
+            <HBox alignment="CENTER_RIGHT">
+
+                <!-- ESPACIO IZQUIERDO -->
+                <Region prefWidth="390" />
+
+                <!-- PANEL LOGIN -->
+                <VBox alignment="CENTER"
+                    spacing="16"
+                    prefWidth="360"
+                    maxWidth="360"
+                    styleClass="login-panel">
+
+                    <!-- ICONO USUARIO -->
+                    <ImageView fx:id="iconUser"
+                        fitWidth="80"
+                        fitHeight="80"
+                        preserveRatio="true" />
+
+                    <!-- TITULO -->
+                    <Label text="INICIAR SESIÓN"
+                        styleClass="login-title" />
+
+                    <!-- CAMPO DNI -->
+                    <VBox spacing="6"
+                        alignment="CENTER_LEFT"
+                        maxWidth="Infinity">
+
+                        <Label text="DNI"
+                            styleClass="field-label" />
+
+                        <TextField fx:id="txtDni"
+                            promptText="Ingrese su número de DNI"
+                            maxWidth="Infinity"
+                            styleClass="dni-field" />
+
+                    </VBox>
+
+                    <!-- BOTON LOGIN -->
+                    <Button fx:id="btnLogin"
+                        text="ENTRAR"
+                        onAction="#iniciarSesion"
+                        defaultButton="true"
+                        maxWidth="Infinity"
+                        styleClass="login-button" />
+
+                </VBox>
+
+                <!-- ESPACIO DERECHO -->
+                <Region prefWidth="35" />
+
+            </HBox>
+
+        </center>
+
+        <!-- FOOTER -->
+        <bottom>
+
+            <HBox alignment="CENTER">
+
+                <padding>
+                    <Insets bottom="12" />
+                </padding>
+
+                <Label text="© 2025 Utilmarket | Todos los derechos reservados | Versión 11"
+                    styleClass="footer-text" />
+
+
+            </HBox>
+
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>

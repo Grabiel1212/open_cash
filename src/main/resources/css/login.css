@@ -1,0 +1,192 @@
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+
+/* =========================================
+   IMAGEN DE FONDO
+   ========================================= */
+
+.background-image {
+    -fx-opacity: 1;
+}
+
+
+/* =========================================
+   BOTONES SUPERIORES
+   ========================================= */
+
+.top-icons {
+    -fx-alignment: CENTER_RIGHT;
+    -fx-spacing: 6;
+    -fx-padding: 6 15 0 0;
+}
+
+
+/* CAJA DE LOS ICONOS */
+
+.icon-box {
+
+    -fx-pref-width: 42;
+    -fx-pref-height: 42;
+
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+
+    -fx-max-width: 42;
+    -fx-max-height: 42;
+
+    -fx-alignment: CENTER;
+
+    -fx-background-radius: 8;
+
+    -fx-cursor: hand;
+
+    -fx-background-color: transparent;
+}
+
+
+/* HOVER NORMAL */
+
+.icon-box:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.08);
+}
+
+
+/* HOVER BOTON CERRAR */
+
+.close-box:hover {
+    -fx-background-color: rgba(255, 0, 0, 0.12);
+}
+
+
+/* =========================================
+   PANEL LOGIN
+   ========================================= */
+
+.login-panel {
+    -fx-padding: 20;
+}
+
+
+/* =========================================
+   TITULO
+   ========================================= */
+
+.login-title {
+
+    -fx-font-size: 24px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #1d3557;
+
+}
+
+
+/* =========================================
+   LABEL DNI
+   ========================================= */
+
+.field-label {
+
+    -fx-font-size: 14px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #1d3557;
+
+}
+
+
+/* =========================================
+   CAMPO DNI
+   ========================================= */
+
+.dni-field {
+
+    -fx-pref-height: 48;
+
+    -fx-background-color: rgba(255, 255, 255, 0.90);
+
+    -fx-background-radius: 10;
+
+    -fx-border-radius: 10;
+
+    -fx-border-color: #b8c3d1;
+
+    -fx-border-width: 1;
+
+    -fx-font-size: 15px;
+
+    -fx-padding: 0 15;
+
+}
+
+
+.dni-field:focused {
+
+    -fx-border-color: #1976D2;
+
+    -fx-border-width: 2;
+
+}
+
+
+/* =========================================
+   BOTON ENTRAR
+   ========================================= */
+
+.login-button {
+
+    -fx-pref-height: 48;
+
+    -fx-background-color: #1976D2;
+
+    -fx-text-fill: white;
+
+    -fx-font-size: 16px;
+
+    -fx-font-weight: bold;
+
+    -fx-background-radius: 10;
+
+    -fx-cursor: hand;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(0, 0, 0, 0.20),
+        6,
+        0,
+        0,
+        3
+    );
+
+}
+
+
+.login-button:hover {
+
+    -fx-background-color: #1565C0;
+
+}
+
+
+.login-button:pressed {
+
+    -fx-background-color: #0D47A1;
+
+}
+
+
+/* =========================================
+   FOOTER
+   ========================================= */
+
+.footer-text {
+
+    -fx-font-size: 11px;
+
+    -fx-text-fill: #667085;
+
+}

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane fx:id="root"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="views.controllers.ConfiguracionController"
+            stylesheets="@/css/configuracion.css"
+            prefWidth="540"
+            prefHeight="430"
+            style="-fx-background-color: transparent;">
+
+    <!-- TARJETA FLOTANTE -->
+    <VBox style="-fx-background-color: white;
+                 -fx-background-radius: 18;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 30, 0, 0, 12);"
+          AnchorPane.topAnchor="0" AnchorPane.bottomAnchor="0"
+          AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0">
+
+        <!-- =============================== -->
+        <!-- CABECERA                        -->
+        <!-- =============================== -->
+        <HBox fx:id="header" spacing="12" alignment="CENTER_LEFT"
+              style="-fx-background-color: linear-gradient(to right, #1a3a6b, #2563eb);
+                     -fx-padding: 16 20;
+                     -fx-background-radius: 18 18 0 0;">
+            <StackPane style="-fx-background-color: rgba(255,255,255,0.15);
+                              -fx-background-radius: 50;
+                              -fx-min-width: 38; -fx-min-height: 38;">
+                <ImageView fx:id="imgSettingHeader" fitWidth="20" fitHeight="20" preserveRatio="true"/>
+            </StackPane>
+            <VBox spacing="0">
+                <Label text="CONFIGURACIÓN"
+                       style="-fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: white;
+                              -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                <Label text="Ajustes de modos inteligentes"
+                       style="-fx-font-size: 11px; -fx-text-fill: #bfdbfe;
+                              -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnCerrarX" text="✕" onAction="#cerrar"
+                    style="-fx-background-color: transparent;
+                           -fx-text-fill: white;
+                           -fx-font-size: 15px;
+                           -fx-font-weight: bold;
+                           -fx-cursor: hand;
+                           -fx-padding: 4 10;
+                           -fx-background-radius: 8;"/>
+        </HBox>
+
+        <!-- =============================== -->
+        <!-- CONTENIDO                       -->
+        <!-- =============================== -->
+        <VBox spacing="16" style="-fx-padding: 22 22 8 22;">
+
+            <Label text="MODOS DE OPERACIÓN"
+                   style="-fx-font-size: 10.5px; -fx-text-fill: #64748b;
+                          -fx-font-weight: 800; -fx-letter-spacing: 1px;"/>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- SWITCH 1: MODO INTELIGENTE (ACTIVO)            -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <HBox spacing="14" alignment="CENTER_LEFT"
+                  style="-fx-background-color: #f8fafc;
+                         -fx-padding: 16 18;
+                         -fx-background-radius: 14;
+                         -fx-border-color: #e2e8f0;
+                         -fx-border-width: 1;
+                         -fx-border-radius: 14;">
+                <StackPane style="-fx-background-color: #eff6ff;
+                                  -fx-background-radius: 50;
+                                  -fx-min-width: 44; -fx-min-height: 44;">
+                    <ImageView fx:id="imgModoInteligente" fitWidth="22" fitHeight="22" preserveRatio="true"/>
+                </StackPane>
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <Label text="Modo Inteligente"
+                           style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b;
+                                  -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                    <Label text="Activa el asistente al detectar una venta realizada en el navegador."
+                           wrapText="true"
+                           style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
+                                  -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                </VBox>
+                <ToggleButton fx:id="switchModoInteligente"
+                              text="OFF"
+                              onAction="#toggleModoInteligente"
+                              styleClass="switch-toggle"
+                              prefWidth="72" prefHeight="34"/>
+            </HBox>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- SWITCH 2: IMPRESIÓN INTELIGENTE (DEMO/OFF)     -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <HBox spacing="14" alignment="CENTER_LEFT"
+                  style="-fx-background-color: #f8fafc;
+                         -fx-padding: 16 18;
+                         -fx-background-radius: 14;
+                         -fx-border-color: #e2e8f0;
+                         -fx-border-width: 1;
+                         -fx-border-radius: 14;
+                         -fx-opacity: 0.7;">
+                <StackPane style="-fx-background-color: #f1f5f9;
+                                  -fx-background-radius: 50;
+                                  -fx-min-width: 44; -fx-min-height: 44;">
+                    <ImageView fx:id="imgImpresionInteligente" fitWidth="22" fitHeight="22" preserveRatio="true"/>
+                </StackPane>
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Impresión de Comprobante Inteligente"
+                               style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b;
+                                      -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                        <Label text="PRÓXIMAMENTE"
+                               style="-fx-font-size: 9px;
+                                      -fx-font-weight: 800;
+                                      -fx-text-fill: #92400e;
+                                      -fx-background-color: #fef3c7;
+                                      -fx-padding: 2 8;
+                                      -fx-background-radius: 8;"/>
+                    </HBox>
+                    <Label text="Imprime automáticamente el comprobante al confirmar una venta."
+                           wrapText="true"
+                           style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
+                                  -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                </VBox>
+                <ToggleButton fx:id="switchImpresionInteligente"
+                              text="OFF"
+                              disable="true"
+                              styleClass="switch-toggle"
+                              prefWidth="72" prefHeight="34"/>
+            </HBox>
+
+        </VBox>
+
+        <!-- =============================== -->
+        <!-- PIE                             -->
+        <!-- =============================== -->
+        <Region VBox.vgrow="ALWAYS"/>
+        <HBox alignment="CENTER_RIGHT" spacing="8"
+              style="-fx-padding: 12 22 18 22;">
+            <Button fx:id="btnCancelar" text="CANCELAR" onAction="#cerrar"
+                    style="-fx-background-color: transparent;
+                           -fx-text-fill: #475569;
+                           -fx-font-weight: 700;
+                           -fx-font-size: 11.5px;
+                           -fx-padding: 8 20;
+                           -fx-cursor: hand;
+                           -fx-background-radius: 10;
+                           -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+            <Button fx:id="btnGuardar" text="GUARDAR" onAction="#guardar"
+                    style="-fx-background-color: #2563eb;
+                           -fx-text-fill: white;
+                           -fx-font-weight: 800;
+                           -fx-font-size: 11.5px;
+                           -fx-padding: 8 24;
+                           -fx-cursor: hand;
+                           -fx-background-radius: 10;
+                           -fx-font-family: 'Inter','Segoe UI',sans-serif;
+                           -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.4), 8, 0, 0, 3);"/>
+        </HBox>
+
+    </VBox>
+</AnchorPane>
