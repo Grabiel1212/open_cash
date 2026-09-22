@@ -11,7 +11,6 @@ import javax.imageio.ImageIO;
 
 import javafx.application.Platform;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import services.cash.HotkeyManager;
 
 public class TrayManager {
@@ -19,13 +18,10 @@ public class TrayManager {
     private final Stage primaryStage;
     private HotkeyManager hotkeyManager;
     private TrayIcon trayIcon;
-
-    // 🔽 NUEVO
     private Runnable shutdownCallback;
 
-    public void setShutdownCallback(Runnable shutdownCallback) {
-        this.shutdownCallback = shutdownCallback;
-    }
+    // 👇 Bandera para crear el icono UNA sola vez
+    private boolean trayReady = false;
 
     public TrayManager(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -35,74 +31,73 @@ public class TrayManager {
         this.hotkeyManager = hotkeyManager;
     }
 
+    public void setShutdownCallback(Runnable shutdownCallback) {
+        this.shutdownCallback = shutdownCallback;
+    }
+
     public void ocultarEnBandeja() {
         try {
             if (!SystemTray.isSupported()) {
-                System.out.println("⚠️ El SystemTray no es compatible con este sistema.");
+                System.out.println("⚠️ SystemTray no soportado.");
                 return;
             }
 
+            // 1) OCULTAR: solo hide(), NUNCA setIconified(true) antes de hide
             Platform.runLater(() -> {
                 if (primaryStage != null) {
-                    primaryStage.setIconified(true);
                     primaryStage.hide();
                 }
             });
 
-            SystemTray tray = SystemTray.getSystemTray();
+            // 2) Crear el icono de bandeja SOLO la primera vez
+            if (!trayReady) {
+                SystemTray tray = SystemTray.getSystemTray();
 
-            // remover icono anterior
-            if (trayIcon != null) {
-                tray.remove(trayIcon);
-                trayIcon = null;
-            }
-
-            BufferedImage image;
-            try (InputStream is = getClass().getResourceAsStream("/images/logo/libro_logo.png")) {
-                if (is == null) {
-                    image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-                } else {
-                    image = ImageIO.read(is);
+                BufferedImage image;
+                try (InputStream is = getClass().getResourceAsStream("/images/logo/libro_logo.png")) {
+                    image = (is == null)
+                            ? new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
+                            : ImageIO.read(is);
                 }
-            }
 
-            trayIcon = new TrayIcon(image, "Utilmarket - en segundo plano");
-            trayIcon.setImageAutoSize(true);
+                trayIcon = new TrayIcon(image, "Utilmarket - en segundo plano");
+                trayIcon.setImageAutoSize(true);
+                trayIcon.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
 
-            trayIcon.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
+                PopupMenu menu = new PopupMenu();
 
-            PopupMenu menu = new PopupMenu();
-            MenuItem abrir = new MenuItem("Abrir");
-            abrir.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
-            menu.add(abrir);
+                MenuItem abrir = new MenuItem("Abrir");
+                abrir.addActionListener(e -> Platform.runLater(this::mostrarDesdeBandeja));
+                menu.add(abrir);
 
-            MenuItem salir = new MenuItem("Salir");
-            salir.addActionListener(e -> {
-                System.out.println("🚪 Cerrando aplicación desde bandeja...");
-
-                // 🔽 Detener TODO
-                if (shutdownCallback != null) {
-                    try {
-                        shutdownCallback.run();
-                    } catch (Exception ignored) {
+                MenuItem salir = new MenuItem("Salir");
+                salir.addActionListener(e -> {
+                    if (shutdownCallback != null) {
+                        try {
+                            shutdownCallback.run();
+                        } catch (Exception ignored) {
+                        }
                     }
-                }
-                if (hotkeyManager != null)
-                    hotkeyManager.stopListening();
+                    if (hotkeyManager != null)
+                        hotkeyManager.stopListening();
+                    tray.remove(trayIcon);
+                    trayReady = false;
+                    Platform.exit();
+                    System.exit(0);
+                });
+                menu.add(salir);
 
-                tray.remove(trayIcon);
-                Platform.exit();
-                System.exit(0);
-            });
-            menu.add(salir);
+                trayIcon.setPopupMenu(menu);
+                tray.add(trayIcon);
+                trayReady = true;
 
-            trayIcon.setPopupMenu(menu);
-            tray.add(trayIcon);
+                trayIcon.displayMessage(
+                        "Aplicación minimizada",
+                        "Utilmarket sigue ejecutándose en segundo plano.",
+                        TrayIcon.MessageType.INFO);
+            }
 
-            trayIcon.displayMessage("Aplicación minimizada", "Utilmarket sigue ejecutándose en segundo plano.",
-                    TrayIcon.MessageType.INFO);
-
-            System.out.println("🟡 Aplicación oculta en bandeja del sistema.");
+            System.out.println("🟡 Aplicación oculta en bandeja.");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,33 +105,26 @@ public class TrayManager {
     }
 
     private void mostrarDesdeBandeja() {
-        Platform.runLater(() -> {
-            try {
-                if (primaryStage != null) {
-                    System.out.println("🟢 Restaurando ventana desde bandeja...");
-                    primaryStage.setIconified(false);
-                    primaryStage.show();
-                    primaryStage.toFront();
-                    primaryStage.requestFocus();
+        try {
+            if (primaryStage == null)
+                return;
 
-                    // truco para Windows 11
-                    Stage temp = new Stage();
-                    temp.setOpacity(0);
-                    temp.initStyle(StageStyle.UTILITY);
-                    temp.setAlwaysOnTop(true);
-                    temp.show();
-                    temp.toFront();
-                    temp.close();
-
-                    primaryStage.setAlwaysOnTop(true);
-                    primaryStage.setAlwaysOnTop(false);
-
-                    System.out.println("✅ Ventana restaurada correctamente.");
-                }
-            } catch (Exception e) {
-                System.err.println("❌ Error al restaurar ventana: " + e.getMessage());
-                e.printStackTrace();
+            // ORDEN CORRECTO:
+            // 1) mostrar
+            primaryStage.show();
+            // 2) des-iconificar (por si quedó minimizada)
+            if (primaryStage.isIconified()) {
+                primaryStage.setIconified(false);
             }
-        });
+            // 3) traer al frente
+            primaryStage.toFront();
+            primaryStage.requestFocus();
+
+            System.out.println("✅ Ventana restaurada desde bandeja.");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error restaurando ventana: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

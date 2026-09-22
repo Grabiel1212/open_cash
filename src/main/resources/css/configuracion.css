@@ -1,0 +1,26 @@
+/* Switch tipo toggle (pastilla ON/OFF) */
+.switch-toggle {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 20;
+    -fx-text-fill: #475569;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-font-family: 'Inter','Segoe UI',sans-serif;
+}
+
+.switch-toggle:hover {
+    -fx-opacity: 0.9;
+}
+
+.switch-toggle:selected {
+    -fx-background-color: #10b981;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(16,185,129,0.45), 8, 0, 0, 3);
+}
+
+.switch-toggle:disabled {
+    -fx-opacity: 0.55;
+    -fx-cursor: default;
+}

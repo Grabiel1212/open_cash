@@ -312,7 +312,7 @@ public class LoginController {
 
                         String texto = "Bienvenido, "
                                         + nombre
-                                        + ". Te damos la bienvenida a Utilmarket.";
+                                        ;
 
                         // =================================================
                         // EJECUTAR AUDIO EN SEGUNDO PLANO

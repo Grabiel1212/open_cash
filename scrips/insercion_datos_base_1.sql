@@ -76,32 +76,32 @@ INSERT INTO empleado (nombre, apellido, dni, telefono, correo)
 VALUES
 -- SUPER ADMIN
 ('RICARDO', 'VERGARA CACERES', '10610778', '996778134', 'alinaj37@gmail.com'),
-
 ('JOSE', 'ABAD VERGARA', '46934720', '969952562', 'josevergara@gmail.com'),
 ('JUAN GRABIEL', 'BARBOZA RIVERA', '75392895', '968124043', 'juangrabielbarbozarivera12@gmail.com'),
-('ALEJANDRO', 'GONZALEZ SERGIO', '001241242', '900000008', 'alejandrosergio@gmail.com'),
-('RUMI MAYURI', 'FERNANDEZ ATAUJE', '75281679', '900000008', 'rumifernnadez@gmail.com'),
+('RUMI', 'FERNANDEZ ATAUJE', '75281679', '900000008', 'rumifernnadez@gmail.com'),
 ('SAHORI', 'GATICA PERDOMO ', '60885704', '965834253', 'sahoriperdomo@gmail.com'),
 ('VALERIA', 'PISCO GUZMAN', '73983030', '900000009', 'valeriagusman@gmail.com'),
 ('TANI MELISSA', 'SALVADOR RAMOS', '75115837', '900000011', 'tamisalvador@gmail.com'),
-('CAMILA ESTHER', 'ZAPATA VARGAS', '74010153', '900000009', 'vargaszapata@gmail.com');
+('CAMILA ESTHER', 'ZAPATA VARGAS', '74010153', '900000009', 'vargaszapata@gmail.com'),
+('ALEJANDRA YAMILE', 'TENORIO BERNABLE', '60997583', '935194006', 'alejandrayamile@gmail.com');
 
 -- =====================================================
 -- USUARIOS
 -- =====================================================
 select * from empleado;
 SELECT * FROM usuario;
+
 INSERT INTO usuario (id_empleado, username, clave)
 VALUES
 (1, 'RICARDO', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
 (2, 'JOSE', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
 (3, 'JUAN', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(4, 'ALEJANDRO', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(5, 'RUMI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(6, 'SAHORI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(7, 'VALERIA', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(8, 'TANI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
-(9, 'CAMILA', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(4, 'RUMI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(5, 'SAHORI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(6, 'VALERIA', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(7, 'TANI', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(8, 'CAMILA', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy'),
+(9, 'ALEJANDRA', '$2a$10$EFkXI4DLl.Sb83/FSsO6R.44yrD/AR7RXbXD/10D4hZTq2FTrqkMy');
 
 
 
@@ -126,17 +126,20 @@ VALUES
 
 
 (4, 1, 'CAJERO', TRUE),
-(5, 1, 'CAJERO', TRUE),
+
+(5, 2, 'CAJERO', TRUE),
+(5, 3, 'CAJERO', TRUE),
 
 (6, 3, 'CAJERO', TRUE),
 (6, 2, 'CAJERO', TRUE),
 
 (7, 1, 'SUPERVISOR', TRUE),
-(7, 2, 'SUPERVISOR', TRUE),
-(7, 3, 'SUPERVISOR', TRUE),
 
-(8, 1, 'CAJERO', TRUE),
-(9, 2, 'CAJERO', TRUE),
+
+(8, 3, 'CAJERO', TRUE),
+
+(9, 1, 'CAJERO', TRUE),
+(9, 2, 'CAJERO', TRUE);
 
 
 

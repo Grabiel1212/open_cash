@@ -13,8 +13,8 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="views.controllers.HomeController"
             stylesheets="@/css/home.css"
-            prefWidth="1000"
-            prefHeight="550"
+            prefWidth="1200"
+            prefHeight="600"
             style="-fx-background-color: #f1f5f9;">
 
     <!-- ===================================================== -->
@@ -66,14 +66,14 @@
 
         <Pane HBox.hgrow="ALWAYS"/>
 
-        <!-- BOTONES VENTANA MÁS ESTILIZADOS (AGREGADO btnSalir) -->
+        <!-- BOTONES VENTANA -->
         <HBox spacing="8">
             <Button fx:id="btnMinimizar" text="—" onAction="#minimizarVentana" styleClass="elegant-window-btn"/>
             <Button fx:id="btnSalir" text="⏻" onAction="#salir" styleClass="elegant-window-btn-exit"/>
             <Button fx:id="btnCerrar" text="✕" onAction="#cerrarVentana" styleClass="elegant-window-btn-close"/>
 
-            <Button fx:id="btnAbrirNavegador" text="🌐" onAction="#abrirNavegador"
-        styleClass="elegant-window-btn"/>
+            <Button fx:id="btnAbrirNavegador" onAction="#abrirNavegador"
+                    styleClass="elegant-window-btn"/>
         </HBox>
     </HBox>
 
@@ -107,19 +107,19 @@
                   style="-fx-background-color: #ffffff; -fx-padding: 35; -fx-background-radius: 20;
                          -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 20;
                          -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 20, 0, 0, 8);"
-                  prefWidth="480">
+                  prefWidth="550">
 
                 <StackPane>
                     <Circle radius="50" fill="#eff6ff" stroke="#bfdbfe" strokeWidth="1.5"/>
                     <ImageView fx:id="imgPrint" fitWidth="36" fitHeight="36" preserveRatio="true"/>
                 </StackPane>
 
-                <VBox spacing="8" alignment="CENTER_LEFT" prefWidth="380">
+                <VBox spacing="8" alignment="CENTER_LEFT" prefWidth="450">
                     <HBox spacing="6" alignment="CENTER_LEFT">
                         <Rectangle width="14" height="2" fill="#2563eb"/>
                         <Label text="SELECCIONAR IMPRESORA" style="-fx-font-size: 11px; -fx-text-fill: #475569; -fx-font-weight: 700; -fx-font-family: 'Inter', 'Segoe UI', sans-serif;"/>
                     </HBox>
-                    <ComboBox fx:id="cmbImpresoras" prefWidth="380" prefHeight="44"
+                    <ComboBox fx:id="cmbImpresoras" prefWidth="450" prefHeight="44"
                               promptText="Seleccione una impresora disponible"
                               styleClass="elegant-combo"/>
                 </VBox>
@@ -132,8 +132,8 @@
                 </HBox>
             </VBox>
 
-            <!-- PANEL DERECHO (PIN + INFO) -->
-            <VBox spacing="25" alignment="CENTER" prefWidth="280">
+            <!-- PANEL DERECHO (PIN + CONFIG) -->
+            <VBox spacing="25" alignment="CENTER" prefWidth="300">
 
                 <!-- ACTUALIZAR PIN -->
                 <VBox spacing="14" alignment="CENTER"
@@ -153,14 +153,26 @@
                             prefWidth="160" prefHeight="38" styleClass="elegant-btn-accent"/>
                 </VBox>
 
-                <!-- INFORMACION -->
-                <VBox spacing="10" alignment="CENTER"
-                      style="-fx-background-color: #f8fafc; -fx-padding: 18 20; -fx-background-radius: 14;
-                             -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 14;">
-                    <Label text="💡 Información" style="-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #1e293b; -fx-font-family: 'Inter', 'Segoe UI', sans-serif;"/>
-                    <Label text="Asegúrese de que la impresora esté conectada y encendida antes de seleccionarla."
-                           wrapText="true" alignment="CENTER"
-                           style="-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-family: 'Inter', 'Segoe UI', sans-serif;"/>
+                <!-- CONFIGURACIÓN -->
+                <VBox spacing="14" alignment="CENTER"
+                      style="-fx-background-color: #f8fafc; -fx-padding: 25 20; -fx-background-radius: 18;
+                             -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 18;
+                             -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 12, 0, 0, 6);">
+                    <StackPane>
+                        <Circle radius="22" fill="#eff6ff" stroke="#bfdbfe" strokeWidth="1"/>
+                        <ImageView fx:id="imgConfig" fitWidth="18" fitHeight="18" preserveRatio="true"/>
+                    </StackPane>
+                    <VBox spacing="6" alignment="CENTER">
+                        <Label text="Configuración" style="-fx-font-size: 14px; -fx-text-fill: #1e293b; -fx-font-weight: 700; -fx-font-family: 'Inter', 'Segoe UI', sans-serif;"/>
+                        <Label text="Ajustes generales y Modo Inteligente." wrapText="true" alignment="CENTER"
+                               style="-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-family: 'Inter', 'Segoe UI', sans-serif;"/>
+                    </VBox>
+                    <Button fx:id="btnConfig"
+                            text="ABRIR CONFIGURACIONES"
+                            onAction="#abrirConfiguracion"
+                            prefWidth="200" prefHeight="38"
+                            focusTraversable="false"
+                            styleClass="elegant-btn-accent"/>
                 </VBox>
             </VBox>
         </HBox>
@@ -186,4 +198,18 @@
             </VBox>
         </VBox>
     </StackPane>
+
+    <!-- ===================================================== -->
+    <!-- 🔽 VERSIÓN AL PIE DE PÁGINA                          -->
+    <!-- ===================================================== -->
+    <Text text="Version v11.0.0"
+          AnchorPane.bottomAnchor="6"
+          AnchorPane.leftAnchor="0"
+          AnchorPane.rightAnchor="0"
+          textAlignment="CENTER"
+          style="-fx-font-size: 11px;
+                 -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+                 -fx-font-weight: 600;
+                 -fx-fill: #94a3b8;"/>
+
 </AnchorPane>

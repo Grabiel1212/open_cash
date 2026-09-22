@@ -182,8 +182,17 @@ class KeyFacilConsoleProcessor {
             if (idSerie == null && serieDesc == null)
                 return null;
 
+            // Hash fuerte del JSON COMPLETO.
+            // Resuelve el bug del ERP que manda SIEMPRE la misma fecha_emision_utc,
+            // lo que causaba que ventas distintas con mismo total/cliente/serie
+            // generaran la misma clave FB: y la segunda se descartara por dedup.
+            // Gson garantiza orden estable para Map → el hash es determinista.
+            String jsonCompleto = GSON.toJson(v);
+            String huella = Integer.toHexString(jsonCompleto.hashCode());
+
             claveUnica = "FB:" + fechaUtc + "|" + idSerie + "|" + serieDesc
-                    + "|" + total + "|" + clienteDoc + "|" + numProd;
+                    + "|" + total + "|" + clienteDoc + "|" + numProd
+                    + "|F:" + huella;
         }
 
         Map<String, Object> item = new LinkedHashMap<>();

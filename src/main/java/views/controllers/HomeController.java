@@ -15,6 +15,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
@@ -28,6 +29,7 @@ import services.cash.HotkeyManager;
 import services.navegador.KeyFacilMonitorService;
 import services.navegador.VentaListenerService;
 import views.alerts.AlertHelper;
+import views.controllers.config.ModoInteligentePrefs;
 import views.controllers.home.PrinterManager;
 import views.controllers.home.TrayManager;
 import views.icons.Icons;
@@ -52,6 +54,13 @@ public class HomeController {
         @FXML
         private Button btnAbrirNavegador;
 
+        @FXML
+        private Button btnConfig;
+
+        // 🔽 NUEVO
+        @FXML
+        private ImageView imgConfig;
+
         private Stage primaryStage;
         private double xOffset, yOffset;
 
@@ -75,6 +84,10 @@ public class HomeController {
                 initializeServices();
                 cargarImpresoraGuardada();
                 refrescarImpresoras();
+
+                // 🔽 NUEVO: aplicar visibilidad del botón navegador según Modo Inteligente
+                // guardado
+                actualizarBotonNavegador();
 
                 // ❌ ELIMINADO: verificarPinEmpleado();
                 System.out.println("✅ HomeController LISTO");
@@ -211,13 +224,33 @@ public class HomeController {
                 hotkeyManager.startListening();
 
                 // =====================================================
-                // MONITOR KEYFACIL (CDP, sin lag) — arranca al entrar al Home
+                // MONITOR KEYFACIL — solo si el Modo Inteligente está ON
                 // =====================================================
-                ventaListenerService = new VentaListenerService(this::abrirCaja);
-                keyFacilMonitor = new KeyFacilMonitorService(ventaListenerService);
-                keyFacilMonitor.start();
+                if (ModoInteligentePrefs.isModoInteligenteActivo()) {
+                        ventaListenerService = new VentaListenerService(this::abrirCaja);
+                        keyFacilMonitor = new KeyFacilMonitorService(ventaListenerService);
+                        keyFacilMonitor.start();
+                        System.out.println("✅ Modo Inteligente ACTIVO → monitor iniciado");
+                } else {
+                        System.out.println("⚠️ Modo Inteligente DESACTIVADO → monitor NO iniciado");
+                }
 
-                System.out.println("✅ Servicios listos: Hotkey + Monitor KeyFacil");
+                // ❌ ELIMINADO el bloque duplicado que arrancaba el monitor siempre
+
+                System.out.println("✅ Servicios listos: Hotkey"
+                                + (keyFacilMonitor != null ? " + Monitor KeyFacil" : " (sin monitor)"));
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // NUEVO: VISIBILIDAD DEL BOTÓN "ABRIR NAVEGADOR"
+        // ════════════════════════════════════════════════════════════════
+        private void actualizarBotonNavegador() {
+                if (btnAbrirNavegador == null)
+                        return;
+                boolean activo = ModoInteligentePrefs.isModoInteligenteActivo();
+                btnAbrirNavegador.setVisible(activo);
+                btnAbrirNavegador.setManaged(activo); // 👈 no reserva espacio al ocultarse
+                System.out.println("🌐 Botón navegador " + (activo ? "VISIBLE" : "OCULTO"));
         }
 
         private void setupDragAndDrop() {
@@ -238,6 +271,16 @@ public class HomeController {
                 Icons.setImageIcons(imgLogo, "logo/", "libro_logo.png", 35);
                 Icons.setImageIcons(imgUpdate, "icons/", "update.png", 14);
                 Icons.setImageIcons(imgPrint, "icons/", "print.png", 35);
+
+                // 🔹 Icono del círculo de "Configuración"
+                Icons.setImageIcons(imgConfig, "icons/", "engranaje.png", 18);
+
+                // 🔹 (Opcional) icono dentro del botón "ABRIR CONFIGURACIONES"
+                Icons.setButtonIcons(btnConfig, "icons/", "engranaje.png", 16);
+
+                // 🔽 NUEVO: icono del botón "Abrir Navegador"
+                Icons.setButtonIcons(btnAbrirNavegador, "icons/", "chrome.png", 20);
+
         }
 
         private void setupAnimations() {
@@ -299,6 +342,62 @@ public class HomeController {
                 }
         }
 
+        @FXML
+        private void abrirConfiguracion() {
+                try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/configuracion.fxml"));
+                        AnchorPane panel = loader.load();
+                        ConfiguracionController controller = loader.getController();
+
+                        Stage modal = new Stage();
+                        modal.initOwner(primaryStage);
+                        modal.initStyle(StageStyle.TRANSPARENT);
+                        modal.initModality(Modality.APPLICATION_MODAL);
+
+                        Scene scene = new Scene(panel);
+                        scene.setFill(Color.TRANSPARENT);
+                        modal.setScene(scene);
+
+                        controller.setStage(modal);
+                        modal.showAndWait();
+
+                        // 🔹 Al cerrar el modal, re-evaluar el modo
+                        aplicarModoInteligente();
+                        actualizarBotonNavegador(); // 👈 NUEVO: refrescar visibilidad del botón
+
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        AlertHelper.mostrar("Error",
+                                        "No se pudo abrir la ventana de configuración: " + e.getMessage(),
+                                        AlertHelper.AlertType.ERROR);
+                }
+        }
+
+        /**
+         * Arranca o detiene el monitor según lo que el usuario acaba de guardar.
+         */
+        private void aplicarModoInteligente() {
+                boolean activo = ModoInteligentePrefs.isModoInteligenteActivo();
+
+                if (activo && keyFacilMonitor == null) {
+                        // Arrancar
+                        ventaListenerService = new VentaListenerService(this::abrirCaja);
+                        keyFacilMonitor = new KeyFacilMonitorService(ventaListenerService);
+                        keyFacilMonitor.start();
+                        System.out.println("🟢 Modo Inteligente ACTIVADO en caliente");
+                } else if (!activo && keyFacilMonitor != null) {
+                        // Detener
+                        try {
+                                keyFacilMonitor.stop();
+                        } catch (Exception ex) {
+                                System.err.println("Error deteniendo monitor: " + ex.getMessage());
+                        }
+                        keyFacilMonitor = null;
+                        ventaListenerService = null;
+                        System.out.println("🔴 Modo Inteligente DESACTIVADO en caliente");
+                }
+        }
+
         private void abrirCaja() {
                 printerManager.abrirCaja();
         }
@@ -312,8 +411,6 @@ public class HomeController {
                 this.primaryStage = stage;
                 trayManager = new TrayManager(primaryStage);
                 trayManager.setHotkeyManager(hotkeyManager);
-
-                // 🔽 Inyectar shutdown compartido
                 trayManager.setShutdownCallback(this::shutdownServices);
 
                 primaryStage.setOnCloseRequest(e -> {
@@ -325,7 +422,34 @@ public class HomeController {
                         }
                 });
 
+                // 🔽 NUEVO: escuchar la señal de "otra instancia intentó abrirse"
+                iniciarListenerInstanciaUnica();
+
                 verificarPinEmpleado();
+        }
+
+        private void iniciarListenerInstanciaUnica() {
+                Thread t = new Thread(() -> {
+                        try (java.net.ServerSocket ss = new java.net.ServerSocket(45821)) {
+                                while (!ss.isClosed()) {
+                                        try (java.net.Socket s = ss.accept()) {
+                                                Platform.runLater(() -> {
+                                                        if (primaryStage != null) {
+                                                                primaryStage.show();
+                                                                if (primaryStage.isIconified())
+                                                                        primaryStage.setIconified(false);
+                                                                primaryStage.toFront();
+                                                                primaryStage.requestFocus();
+                                                        }
+                                                });
+                                        }
+                                }
+                        } catch (Exception e) {
+                                System.err.println("Listener de instancia única detenido: " + e.getMessage());
+                        }
+                }, "instance-listener");
+                t.setDaemon(true);
+                t.start();
         }
 
         public void shutdownServices() {
@@ -341,22 +465,16 @@ public class HomeController {
 
         @FXML
         private void abrirNavegador() {
-                try {
-                        if (keyFacilMonitor == null) {
-                                AlertHelper.mostrar("Error",
-                                                "El monitor de KeyFacil aún no está listo.",
-                                                AlertHelper.AlertType.WARNING);
-                                return;
-                        }
-
-                        // Lanzar en background para no bloquear la UI
-                        keyFacilMonitor.abrirNavegadorKeyFacil();
-
-                } catch (Exception e) {
-                        e.printStackTrace();
-                        AlertHelper.mostrar("Error",
-                                        "No se pudo abrir el navegador: " + e.getMessage(),
-                                        AlertHelper.AlertType.ERROR);
+                if (!ModoInteligentePrefs.isModoInteligenteActivo()) {
+                        AlertHelper.mostrar("Modo Inteligente desactivado",
+                                        "Activa el Modo Inteligente en configuración para usar el navegador.",
+                                        AlertHelper.AlertType.WARNING);
+                        return;
                 }
+                if (keyFacilMonitor == null) {
+                        AlertHelper.mostrar("Error", "El monitor aún no está listo.", AlertHelper.AlertType.WARNING);
+                        return;
+                }
+                keyFacilMonitor.abrirNavegadorKeyFacil();
         }
 }

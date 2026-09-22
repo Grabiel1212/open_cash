@@ -31,10 +31,17 @@ import helpers.MensajeHelper;
  * - Una KeyFacilSession por pestaña (WebSocket persistente, un hilo por tab).
  * - El bucle principal solo crea/destruye sesiones cada 500 ms.
  * - Resistente a cierres de Chrome (reconecta automáticamente).
+ *
+ * FIX (2026): cuando el usuario cierra el navegador visualmente pero quedan
+ * procesos chrome.exe "zombie" con el perfil C:\ChromeKeyFacil, un nuevo
+ * arranque NO activa el --remote-debugging-port (Chrome se pega al zombie).
+ * Ahora: si el puerto 9222 no responde tras esperar, matamos SOLO los
+ * chrome.exe cuyo CommandLine contenga "ChromeKeyFacil" y relanzamos.
  */
 public class KeyFacilMonitorService {
 
     private static final int DEBUG_PORT = 9222;
+    private static final String USER_DATA_DIR = "C:\\ChromeKeyFacil";
     private static final HttpClient HTTP = HttpClient.newHttpClient();
     private static final Gson GSON = new GsonBuilder().create();
 
@@ -79,28 +86,10 @@ public class KeyFacilMonitorService {
     // =====================================================
     private void buclePrincipal() {
         try {
-            if (!chromeDebugDisponible()) {
-                System.out.println("🟢 Iniciando Chrome para KeyFacil...");
-                ProcessBuilder chrome = new ProcessBuilder(
-                        obtenerRutaChrome(),
-                        "--remote-debugging-port=" + DEBUG_PORT,
-                        "--user-data-dir=C:\\ChromeKeyFacil",
-                        "--start-maximized");
-                chrome.start();
-
-                boolean disponible = false;
-                for (int i = 0; i < 20 && running.get(); i++) {
-                    if (chromeDebugDisponible()) {
-                        disponible = true;
-                        break;
-                    }
-                    Thread.sleep(500);
-                }
-                if (!disponible) {
-                    MensajeHelper.error("Chrome no inició el puerto " + DEBUG_PORT, null);
-                    running.set(false);
-                    return;
-                }
+            if (!asegurarChromeConDebug()) {
+                MensajeHelper.error("Chrome no inició el puerto " + DEBUG_PORT, null);
+                running.set(false);
+                return;
             }
 
             System.out.println("🔌 Conectando con Chrome (CDP)...");
@@ -216,6 +205,79 @@ public class KeyFacilMonitorService {
             for (KeyFacilSession s : sessions.values())
                 s.close();
             sessions.clear();
+        }
+    }
+
+    // =====================================================
+    // NUEVO: garantizar Chrome CON debug port
+    // =====================================================
+    /**
+     * Asegura que exista un Chrome accesible por CDP.
+     * - Si el puerto ya responde → true inmediato.
+     * - Si no → lanza Chrome y espera 8 s.
+     * - Si sigue sin responder → mata SOLO los chrome.exe con nuestro
+     * --user-data-dir (zombies) y relanza, esperando hasta 15 s más.
+     */
+    private boolean asegurarChromeConDebug() throws Exception {
+
+        if (chromeDebugDisponible())
+            return true;
+
+        // Intento 1: lanzar Chrome normalmente
+        System.out.println("🟢 Iniciando Chrome con debug...");
+        lanzarChrome();
+
+        if (esperarDebugDisponible(8))
+            return true;
+
+        // Intento 2: había un Chrome zombie con nuestro perfil → matarlo y relanzar
+        System.out.println("⚠️ Puerto " + DEBUG_PORT + " no responde. "
+                + "Matando procesos Chrome con el perfil " + USER_DATA_DIR + "...");
+        matarChromeConNuestroPerfil();
+        Thread.sleep(1500);
+
+        System.out.println("🔄 Relanzando Chrome con debug...");
+        lanzarChrome();
+
+        return esperarDebugDisponible(15);
+    }
+
+    private void lanzarChrome() throws Exception {
+        ProcessBuilder chrome = new ProcessBuilder(
+                obtenerRutaChrome(),
+                "--remote-debugging-port=" + DEBUG_PORT,
+                "--user-data-dir=" + USER_DATA_DIR,
+                "--start-maximized");
+        chrome.start();
+    }
+
+    private boolean esperarDebugDisponible(int segundos) throws InterruptedException {
+        int iteraciones = segundos * 2;
+        for (int i = 0; i < iteraciones; i++) {
+            if (chromeDebugDisponible())
+                return true;
+            Thread.sleep(500);
+        }
+        return chromeDebugDisponible();
+    }
+
+    /**
+     * Mata SOLO los chrome.exe cuyo CommandLine contenga "ChromeKeyFacil".
+     * Usa PowerShell (wmic está deprecado en Windows 11).
+     * No afecta al Chrome personal del usuario.
+     */
+    private void matarChromeConNuestroPerfil() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "powershell", "-NoProfile", "-Command",
+                    "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | " +
+                            "Where-Object { $_.CommandLine -like '*ChromeKeyFacil*' } | " +
+                            "ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }");
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            p.waitFor(8, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            System.err.println("Error matando Chrome zombie: " + e.getMessage());
         }
     }
 
@@ -342,29 +404,9 @@ public class KeyFacilMonitorService {
     public void abrirNavegadorKeyFacil() {
         new Thread(() -> {
             try {
-                boolean yaCorriendo = chromeDebugDisponible();
-
-                if (!yaCorriendo) {
-                    System.out.println("🟢 Abriendo Chrome KeyFacil (manual)...");
-                    ProcessBuilder chrome = new ProcessBuilder(
-                            obtenerRutaChrome(),
-                            "--remote-debugging-port=" + DEBUG_PORT,
-                            "--user-data-dir=C:\\ChromeKeyFacil",
-                            "--start-maximized");
-                    chrome.start();
-
-                    boolean listo = false;
-                    for (int i = 0; i < 20; i++) {
-                        if (chromeDebugDisponible()) {
-                            listo = true;
-                            break;
-                        }
-                        Thread.sleep(500);
-                    }
-                    if (!listo) {
-                        MensajeHelper.error("Chrome no levantó el puerto " + DEBUG_PORT, null);
-                        return;
-                    }
+                if (!asegurarChromeConDebug()) {
+                    MensajeHelper.error("Chrome no levantó el puerto " + DEBUG_PORT, null);
+                    return;
                 }
 
                 if (!existePestanaKeyFacil()) {

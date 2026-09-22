@@ -141,8 +141,9 @@
                     <Insets bottom="12" />
                 </padding>
 
-                <Label text="© 2025 Utilmarket | Todos los derechos reservados"
+                <Label text="© 2025 Utilmarket | Todos los derechos reservados | Versión 11"
                     styleClass="footer-text" />
+
 
             </HBox>
 

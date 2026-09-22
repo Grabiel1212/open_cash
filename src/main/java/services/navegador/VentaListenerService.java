@@ -4,10 +4,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import helpers.MensajeHelper;
-import javafx.application.Platform;
 
 /**
  * Servicio que recibe un resumen de venta YA PROCESADO por el navegador.
@@ -15,12 +16,33 @@ import javafx.application.Platform;
  * Reglas:
  * - Abre caja si la venta tiene AL MENOS UN pago en EFECTIVO.
  * - Si la venta es solo CULQUI / YAPE / PLIN / OPENPAY → NO abre.
- * - Cada venta se procesa UNA sola vez (dedup por claveUnica que envía JS).
+ * - Cada venta se procesa UNA sola vez (dedup por claveUnica).
  * - Thread-safe: bloquea procesamiento concurrente.
+ *
+ * FIX 2026-A: la apertura de caja ya NO usa Platform.runLater().
+ * Cuando la app se oculta en bandeja (Stage.hide()), el hilo de JavaFX
+ * puede dejar de procesar runLater(), por lo que la caja nunca se abría.
+ * PrinterManager.abrirCaja() NO toca JavaFX → usamos un executor propio.
+ *
+ * FIX 2026-B: el ERP a veces envía SIEMPRE la misma fecha
+ * (2026-09-17T05:00:00Z),
+ * lo que hacía que la clave fallback FB:... colisionara entre ventas distintas
+ * con igual total. Ahora reforzamos la clave FB con un hash de los pagos y
+ * productos, y logueamos cuando se descarta un duplicado.
  */
 public class VentaListenerService {
 
     private static final int MAX_HISTORIAL = 500;
+
+    /**
+     * Executor dedicado: NO depende del hilo de JavaFX.
+     * Funciona con la app visible o minimizada en la bandeja.
+     */
+    private static final ExecutorService CAJA_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "AbrirCaja");
+        t.setDaemon(true);
+        return t;
+    });
 
     private final Runnable abrirCajaCallback;
     private final AtomicInteger contadorVentas = new AtomicInteger(0);
@@ -41,8 +63,6 @@ public class VentaListenerService {
 
     /**
      * Procesa el resumen de venta ya extraído por el JS del navegador.
-     * Campos esperados: claveUnica, uuid, id, serie, numero, total, cliente,
-     * responsable, pago, detallePagos, montosPago, esEfectivo.
      *
      * @return true si se abrió la caja (había al menos un pago efectivo).
      */
@@ -58,10 +78,12 @@ public class VentaListenerService {
             return false;
         }
 
-        // 2) Deduplicar
+        // 2) Deduplicar (con log para que un descarte NUNCA sea silencioso)
         synchronized (lock) {
-            if (ventasProcesadas.containsKey(clave))
+            if (ventasProcesadas.containsKey(clave)) {
+                System.out.println("⏭️ Venta descartada por dedup: " + clave);
                 return false;
+            }
             ventasProcesadas.put(clave, Boolean.TRUE);
         }
 
@@ -99,11 +121,11 @@ public class VentaListenerService {
     }
 
     // =====================================================
-    // CLAVE ÚNICA (usa la que ya calculó el JS)
+    // CLAVE ÚNICA
     // =====================================================
     private String extraerClaveUnica(Map<?, ?> r) {
 
-        // El JS ya generó la claveUnica (UUID/ID/Fallback)
+        // El processor ya generó una clave fuerte (incluye hash del JSON si es FB:).
         Object clave = r.get("claveUnica");
         if (clave != null && !clave.toString().isBlank()
                 && !"null".equals(clave.toString())) {
@@ -123,6 +145,33 @@ public class VentaListenerService {
         }
 
         return null;
+    }
+
+    /**
+     * Hash estable del contenido de pagos y montos.
+     * Evita que dos ventas con el mismo total pero distinto detalle colisionen.
+     */
+    private String hashContenido(Map<?, ?> r) {
+        StringBuilder sb = new StringBuilder();
+
+        Object det = r.get("detallePagos");
+        if (det instanceof List<?> l) {
+            for (Object o : l) {
+                sb.append(o).append(';');
+            }
+        }
+
+        Object mon = r.get("montosPago");
+        if (mon instanceof List<?> l) {
+            for (Object o : l) {
+                sb.append(o).append(';');
+            }
+        }
+
+        if (sb.length() == 0)
+            return "0";
+
+        return Integer.toHexString(sb.toString().hashCode());
     }
 
     // =====================================================
@@ -172,22 +221,29 @@ public class VentaListenerService {
                 esEfectivo ? "SÍ ✅  → ABRIR CAJA" : "NO ❌  → NO abrir");
         System.out.printf("║  Clave única : %s%n", recortar(clave, 40));
         System.out.println("╚═══════════════════════════════════════════════════════════╝");
+        System.out.flush();
     }
 
     // =====================================================
-    // ABRIR CAJA
+    // ABRIR CAJA (sin Platform.runLater)
     // =====================================================
     private void dispararAperturaCaja(int numero, String clave) {
-        MensajeHelper.info("💵 Venta #" + numero + " EFECTIVO → abriendo caja [" + clave + "]");
-        if (abrirCajaCallback != null) {
-            Platform.runLater(() -> {
-                try {
-                    abrirCajaCallback.run();
-                } catch (Exception e) {
-                    MensajeHelper.error("Error al abrir caja para venta #" + numero, e);
-                }
-            });
+        System.out.println("💵 Venta #" + numero + " EFECTIVO → abriendo caja [" + clave + "]");
+
+        if (abrirCajaCallback == null) {
+            System.out.println("⚠️ abrirCajaCallback es null. No se puede abrir caja.");
+            return;
         }
+
+        CAJA_EXECUTOR.submit(() -> {
+            try {
+                abrirCajaCallback.run();
+                System.out.println("✅ Caja abierta correctamente (venta #" + numero + ")");
+            } catch (Exception e) {
+                System.err.println("❌ Error abriendo caja venta #" + numero + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 
     // =====================================================
