@@ -38,6 +38,9 @@ public class ConfiguracionController {
     private boolean modoInteligenteActivo;
     private boolean impresionInteligenteActiva;
 
+    /** Bandera interna para evitar que los toggles se pisen entre sí. */
+    private boolean ajustandoToggles = false;
+
     @FXML
     public void initialize() {
 
@@ -49,6 +52,13 @@ public class ConfiguracionController {
         // 🔹 Leer estado guardado en disco
         modoInteligenteActivo = ModoInteligentePrefs.isModoInteligenteActivo();
         impresionInteligenteActiva = ModoInteligentePrefs.isImpresionInteligenteActiva();
+
+        // 🔹 Si por algún motivo quedaron ambos activos guardados en disco,
+        // dejamos ganar al Modo Inteligente (navegador) y apagamos el de impresión.
+        if (modoInteligenteActivo && impresionInteligenteActiva) {
+            impresionInteligenteActiva = false;
+            ModoInteligentePrefs.setImpresionInteligenteActiva(false);
+        }
 
         // 🔹 Reflejarlo en los switches
         switchModoInteligente.setSelected(modoInteligenteActivo);
@@ -75,24 +85,87 @@ public class ConfiguracionController {
         return switchModoInteligente.isSelected();
     }
 
+    // =====================================================
+    // TOGGLE 1: Modo Inteligente (navegador)
+    // =====================================================
     @FXML
     private void toggleModoInteligente() {
+        if (ajustandoToggles)
+            return;
+
+        // Si el usuario acaba de ACTIVAR el Modo Inteligente (navegador)
+        // → apagamos Impresión Inteligente para que NO se abra la caja dos veces.
+        if (switchModoInteligente.isSelected()) {
+            ajustandoToggles = true;
+            try {
+                if (switchImpresionInteligente.isSelected()) {
+                    switchImpresionInteligente.setSelected(false);
+                    actualizarTexto(switchImpresionInteligente);
+                }
+            } finally {
+                ajustandoToggles = false;
+            }
+        }
+
         actualizarTexto(switchModoInteligente);
+    }
+
+    // =====================================================
+    // TOGGLE 2: Impresión Inteligente
+    // =====================================================
+    @FXML
+    private void toggleImpresionInteligente() {
+        if (ajustandoToggles)
+            return;
+
+        // Si el usuario acaba de ACTIVAR Impresión Inteligente
+        // → apagamos Modo Inteligente (navegador) para evitar doble apertura de caja.
+        if (switchImpresionInteligente.isSelected()) {
+            ajustandoToggles = true;
+            try {
+                if (switchModoInteligente.isSelected()) {
+                    switchModoInteligente.setSelected(false);
+                    actualizarTexto(switchModoInteligente);
+                }
+            } finally {
+                ajustandoToggles = false;
+            }
+        }
+
+        actualizarTexto(switchImpresionInteligente);
     }
 
     private void actualizarTexto(ToggleButton tb) {
         tb.setText(tb.isSelected() ? "ON" : "OFF");
     }
 
+    // =====================================================
+    // GUARDAR
+    // =====================================================
     @FXML
     private void guardar() {
+
+        // 🔒 Regla de oro: nunca los dos activos.
+        // Si por alguna razón ambos quedaron ON, priorizamos el último
+        // que el usuario tocó. Como los toggles ya son excluyentes,
+        // esto es defensa por si algo externo los modificó.
+        boolean modo = switchModoInteligente.isSelected();
+        boolean print = switchImpresionInteligente.isSelected();
+
+        if (modo && print) {
+            // No debería pasar, pero por seguridad:
+            print = false;
+            switchImpresionInteligente.setSelected(false);
+            actualizarTexto(switchImpresionInteligente);
+        }
+
         // 🔹 Persistir en disco
-        ModoInteligentePrefs.setModoInteligenteActivo(switchModoInteligente.isSelected());
-        ModoInteligentePrefs.setImpresionInteligenteActiva(switchImpresionInteligente.isSelected());
+        ModoInteligentePrefs.setModoInteligenteActivo(modo);
+        ModoInteligentePrefs.setImpresionInteligenteActiva(print);
 
         System.out.println("💾 Guardado:");
-        System.out.println("   Modo Inteligente      = " + switchModoInteligente.isSelected());
-        System.out.println("   Impresión Inteligente = " + switchImpresionInteligente.isSelected());
+        System.out.println("   Modo Inteligente      = " + modo);
+        System.out.println("   Impresión Inteligente = " + print);
 
         cerrar();
     }

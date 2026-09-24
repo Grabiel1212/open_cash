@@ -1,4 +1,4 @@
-package services.navegador;
+package services.navegador.apertura;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

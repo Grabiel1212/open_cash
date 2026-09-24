@@ -1,4 +1,4 @@
-package services.navegador;
+package services.navegador.apertura;
 
 import java.net.URI;
 import java.net.http.HttpClient;

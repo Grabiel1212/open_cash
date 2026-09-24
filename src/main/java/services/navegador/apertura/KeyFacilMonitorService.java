@@ -1,4 +1,4 @@
-package services.navegador;
+package services.navegador.apertura;
 
 import java.io.File;
 import java.net.HttpURLConnection;

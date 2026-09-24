@@ -26,8 +26,9 @@ import model.Empleado;
 import model.Sucursal;
 import services.cash.ConfigManagerDB;
 import services.cash.HotkeyManager;
-import services.navegador.KeyFacilMonitorService;
-import services.navegador.VentaListenerService;
+import services.navegador.apertura.KeyFacilMonitorService;
+import services.navegador.apertura.VentaListenerService;
+import services.navegador.impresion.ChromePrintService;
 import views.alerts.AlertHelper;
 import views.controllers.config.ModoInteligentePrefs;
 import views.controllers.home.PrinterManager;
@@ -72,6 +73,9 @@ public class HomeController {
         // 🔽 NUEVOS CAMPOS
         private VentaListenerService ventaListenerService;
         private KeyFacilMonitorService keyFacilMonitor;
+
+        // 🖨️ NUEVO: servicio de impresión automática
+        private ChromePrintService chromePrintService;
 
         @FXML
         public void initialize() {
@@ -235,10 +239,22 @@ public class HomeController {
                         System.out.println("⚠️ Modo Inteligente DESACTIVADO → monitor NO iniciado");
                 }
 
-                // ❌ ELIMINADO el bloque duplicado que arrancaba el monitor siempre
+                // =====================================================
+                // 🖨️ NUEVO: IMPRESIÓN AUTOMÁTICA
+                // Solo arranca si "Impresión Inteligente" está ON.
+                // =====================================================
+                if (ModoInteligentePrefs.isImpresionInteligenteActiva()) {
+                        chromePrintService = new ChromePrintService(configManager);
+                        chromePrintService.start();
+                        System.out.println("✅ Impresión Inteligente ACTIVA → ChromePrintService iniciado");
+                } else {
+                        System.out.println("⚠️ Impresión Inteligente DESACTIVADA → ChromePrintService NO iniciado");
+                }
 
                 System.out.println("✅ Servicios listos: Hotkey"
-                                + (keyFacilMonitor != null ? " + Monitor KeyFacil" : " (sin monitor)"));
+                                + (keyFacilMonitor != null ? " + Monitor KeyFacil" : " (sin monitor)")
+                                + (chromePrintService != null ? " + PrintService" : " (sin print)"));
+
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -396,6 +412,28 @@ public class HomeController {
                         ventaListenerService = null;
                         System.out.println("🔴 Modo Inteligente DESACTIVADO en caliente");
                 }
+
+                // 🖨️ NUEVO -------- Impresión Inteligente (ChromePrintService) --------
+                boolean printActivo = ModoInteligentePrefs.isImpresionInteligenteActiva();
+
+                if (printActivo && chromePrintService == null) {
+                        try {
+                                chromePrintService = new ChromePrintService(configManager);
+                                chromePrintService.start();
+                                System.out.println("🟢 Impresión Inteligente ACTIVADA en caliente");
+                        } catch (Exception ex) {
+                                System.err.println("Error arrancando ChromePrintService: " + ex.getMessage());
+                                chromePrintService = null;
+                        }
+                } else if (!printActivo && chromePrintService != null) {
+                        try {
+                                chromePrintService.stop();
+                        } catch (Exception ex) {
+                                System.err.println("Error deteniendo ChromePrintService: " + ex.getMessage());
+                        }
+                        chromePrintService = null;
+                        System.out.println("🔴 Impresión Inteligente DESACTIVADA en caliente");
+                }
         }
 
         private void abrirCaja() {
@@ -456,6 +494,11 @@ public class HomeController {
                 try {
                         if (keyFacilMonitor != null)
                                 keyFacilMonitor.stop();
+
+                        // 🖨️ NUEVO: detener también el servicio de impresión
+                        if (chromePrintService != null)
+                                chromePrintService.stop();
+
                         if (hotkeyManager != null)
                                 hotkeyManager.stopListening();
                 } catch (Exception e) {

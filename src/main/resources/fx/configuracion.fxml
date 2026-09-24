@@ -64,7 +64,7 @@
                           -fx-font-weight: 800; -fx-letter-spacing: 1px;"/>
 
             <!-- ═══════════════════════════════════════════════ -->
-            <!-- SWITCH 1: MODO INTELIGENTE (ACTIVO)            -->
+            <!-- SWITCH 1: MODO INTELIGENTE (NAVEGADOR)         -->
             <!-- ═══════════════════════════════════════════════ -->
             <HBox spacing="14" alignment="CENTER_LEFT"
                   style="-fx-background-color: #f8fafc;
@@ -82,7 +82,7 @@
                     <Label text="Modo Inteligente"
                            style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b;
                                   -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
-                    <Label text="Activa el asistente al detectar una venta realizada en el navegador."
+                    <Label text="Detecta la venta en el navegador y abre la caja automáticamente."
                            wrapText="true"
                            style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
                                   -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
@@ -95,7 +95,7 @@
             </HBox>
 
             <!-- ═══════════════════════════════════════════════ -->
-            <!-- SWITCH 2: IMPRESIÓN INTELIGENTE (DEMO/OFF)     -->
+            <!-- SWITCH 2: IMPRESIÓN INTELIGENTE                -->
             <!-- ═══════════════════════════════════════════════ -->
             <HBox spacing="14" alignment="CENTER_LEFT"
                   style="-fx-background-color: #f8fafc;
@@ -103,34 +103,24 @@
                          -fx-background-radius: 14;
                          -fx-border-color: #e2e8f0;
                          -fx-border-width: 1;
-                         -fx-border-radius: 14;
-                         -fx-opacity: 0.7;">
+                         -fx-border-radius: 14;">
                 <StackPane style="-fx-background-color: #f1f5f9;
                                   -fx-background-radius: 50;
                                   -fx-min-width: 44; -fx-min-height: 44;">
                     <ImageView fx:id="imgImpresionInteligente" fitWidth="22" fitHeight="22" preserveRatio="true"/>
                 </StackPane>
                 <VBox spacing="3" HBox.hgrow="ALWAYS">
-                    <HBox spacing="8" alignment="CENTER_LEFT">
-                        <Label text="Impresión de Comprobante Inteligente"
-                               style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b;
-                                      -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
-                        <Label text="PRÓXIMAMENTE"
-                               style="-fx-font-size: 9px;
-                                      -fx-font-weight: 800;
-                                      -fx-text-fill: #92400e;
-                                      -fx-background-color: #fef3c7;
-                                      -fx-padding: 2 8;
-                                      -fx-background-radius: 8;"/>
-                    </HBox>
-                    <Label text="Imprime automáticamente el comprobante al confirmar una venta."
+                    <Label text="Impresión de Comprobante Inteligente"
+                           style="-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1e293b;
+                                  -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
+                    <Label text="Imprime el comprobante automáticamente y abre la caja al confirmar la venta."
                            wrapText="true"
                            style="-fx-font-size: 11.5px; -fx-text-fill: #64748b;
                                   -fx-font-family: 'Inter','Segoe UI',sans-serif;"/>
                 </VBox>
                 <ToggleButton fx:id="switchImpresionInteligente"
                               text="OFF"
-                              disable="true"
+                              onAction="#toggleImpresionInteligente"
                               styleClass="switch-toggle"
                               prefWidth="72" prefHeight="34"/>
             </HBox>

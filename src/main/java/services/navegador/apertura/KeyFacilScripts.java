@@ -1,4 +1,4 @@
-package services.navegador;
+package services.navegador.apertura;
 
 /**
  * Hook idempotente pero RE-INSTALABLE:
