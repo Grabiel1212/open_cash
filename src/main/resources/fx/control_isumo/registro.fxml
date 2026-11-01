@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootStack"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="views.controllers.control_insumo.RegistroInsumoController"
+           prefWidth="1120"
+           prefHeight="620"
+           stylesheets="@/css/registro_insumo.css">
+
+    <!-- ================= VENTANA PRINCIPAL ================= -->
+    <VBox fx:id="rootVentana" styleClass="root-panel" spacing="0">
+
+        <!-- BARRA DE TÍTULO (cabecera azul) -->
+        <HBox fx:id="barraTitulo"
+              styleClass="barra-titulo"
+              alignment="CENTER_LEFT"
+              spacing="12"
+              onMousePressed="#iniciarArrastre"
+              onMouseDragged="#arrastrarVentana"
+              onMouseReleased="#terminarArrastre">
+
+            <VBox spacing="1">
+                <Label text="Control de impresiones" styleClass="titulo"/>
+                <Label text="Registra los contadores iniciales de cada equipo."
+                       styleClass="subtitulo"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Arrastra para mover" styleClass="pista-arrastre"/>
+
+            <!-- 🔇 BOTÓN SILENCIAR (solo visible con alarma activa) -->
+            <Button fx:id="btnSilenciar"
+                    text="🔇  Silenciar"
+                    styleClass="btn-silenciar"
+                    onAction="#silenciarAlarma"
+                    visible="false"
+                    managed="false"/>
+
+            <Button fx:id="btnCerrar"
+                    text="✕"
+                    styleClass="btn-cerrar"
+                    onAction="#solicitarCierre"/>
+        </HBox>
+
+        <!-- CUERPO: DOS COLUMNAS -->
+        <HBox spacing="12" VBox.vgrow="ALWAYS" styleClass="cuerpo-panel">
+
+            <VBox spacing="10" prefWidth="510" HBox.hgrow="ALWAYS">
+
+                <!-- SELECTOR -->
+                <VBox styleClass="tarjeta" spacing="8">
+                    <Label text="SELECCIONAR EQUIPOS" styleClass="etiqueta-seccion"/>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <CheckBox fx:id="chkRicoh"
+                                  text="Fotocopiadora Ricoh"
+                                  styleClass="check-equipo"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="B/N + Color" styleClass="chip-info"/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <CheckBox fx:id="chkEpson"
+                                  text="Impresora Epson"
+                                  styleClass="check-equipo"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="General" styleClass="chip-info"/>
+                    </HBox>
+                </VBox>
+
+                <!-- RICOH -->
+                <VBox fx:id="panelRicoh" styleClass="tarjeta" spacing="10" disable="true">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <VBox spacing="1">
+                            <Label text="Fotocopiadora Ricoh" styleClass="tarjeta-titulo"/>
+                            <Label text="Contadores separados" styleClass="tarjeta-subtitulo"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="RICOH" styleClass="chip-marca chip-marca-ricoh"/>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Blanco y negro (B/N)" styleClass="etiqueta-campo"/>
+                            <TextField fx:id="txtRicohBn"
+                                       promptText="Contador B/N"
+                                       styleClass="campo-texto"
+                                       maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Color" styleClass="etiqueta-campo"/>
+                            <TextField fx:id="txtRicohColor"
+                                       promptText="Contador color"
+                                       styleClass="campo-texto"
+                                       maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="8"
+                          styleClass="fila-total fila-total-ricoh">
+                        <Label text="TOTAL" styleClass="total-etiqueta-ricoh"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="lblRicohTotal" text="Total: 0"
+                               styleClass="total-valor-ricoh"/>
+                    </HBox>
+                </VBox>
+
+                <!-- EPSON -->
+                <VBox fx:id="panelEpson" styleClass="tarjeta" spacing="10" disable="true">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <VBox spacing="1">
+                            <Label text="Impresora Epson" styleClass="tarjeta-titulo"/>
+                            <Label text="Contador general de impresiones"
+                                   styleClass="tarjeta-subtitulo"/>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="EPSON" styleClass="chip-marca chip-marca-epson"/>
+                    </HBox>
+
+                    <VBox spacing="5">
+                        <Label text="Contador total" styleClass="etiqueta-campo"/>
+                        <TextField fx:id="txtEpsonBn"
+                                   promptText="Introduce el contador general"
+                                   styleClass="campo-texto"
+                                   maxWidth="Infinity"/>
+                        <TextField fx:id="txtEpsonColor"
+                                   visible="false" managed="false"
+                                   maxHeight="0" prefHeight="0"/>
+                    </VBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="8"
+                          styleClass="fila-total fila-total-epson">
+                        <Label text="TOTAL GENERAL" styleClass="total-etiqueta-epson"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="lblEpsonTotal" text="Total: 0"
+                               styleClass="total-valor-epson"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <VBox spacing="10" prefWidth="560" minWidth="480">
+
+                <!-- GUÍA -->
+                <VBox styleClass="tarjeta" spacing="8" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="?" styleClass="icono-ayuda"/>
+                        <VBox spacing="1">
+                            <Label text="¿Cómo consultar el contador Ricoh?"
+                                   styleClass="guia-titulo"/>
+                            <Label text="Pulsa «User Tools» → «Contador»"
+                                   styleClass="guia-subtitulo"/>
+                        </VBox>
+                    </HBox>
+
+                    <StackPane fx:id="contenedorImg"
+                               VBox.vgrow="ALWAYS"
+                               minHeight="140"
+                               styleClass="contenedor-imagen">
+                        <ImageView fx:id="imgGuia"
+                                   preserveRatio="true" smooth="true" cache="true"
+                                   onMouseClicked="#clicImagenGuia"
+                                   styleClass="imagen-guia"
+                                   accessibleText="Guía visual para consultar el contador de la fotocopiadora Ricoh"/>
+                    </StackPane>
+
+                    <Label text="💡  Doble clic en la imagen para ampliarla"
+                           styleClass="guia-hint"/>
+                </VBox>
+
+                <!-- BOTONES: EXTENDER + GUARDAR -->
+                <HBox spacing="10">
+                    <Button fx:id="btnExtender"
+                            text="Extender 5 minutos"
+                            onAction="#extenderCincoMinutos"
+                            maxWidth="Infinity"
+                            HBox.hgrow="ALWAYS"
+                            visible="false"
+                            managed="false"
+                            styleClass="btn-extender"/>
+
+                    <Button fx:id="btnGuardar"
+                            text="Guardar lecturas"
+                            onAction="#guardarLectura"
+                            maxWidth="Infinity"
+                            HBox.hgrow="ALWAYS"
+                            styleClass="btn-guardar"/>
+                </HBox>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- OVERLAY / LIGHTBOX -->
+    <StackPane fx:id="overlayGuia"
+               styleClass="overlay-guia"
+               visible="false"
+               managed="false">
+
+        <Region styleClass="overlay-fondo" onMouseClicked="#cerrarOverlay"/>
+
+        <VBox styleClass="lightbox" spacing="8"
+              maxWidth="900" maxHeight="540">
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Guía de contadores Ricoh" styleClass="lightbox-titulo"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="ESC para cerrar" styleClass="lightbox-hint"/>
+                <Button text="✕"
+                        styleClass="btn-cerrar-overlay"
+                        onAction="#cerrarOverlay"/>
+            </HBox>
+
+            <StackPane fx:id="contenedorImgGrande"
+                       VBox.vgrow="ALWAYS"
+                       minHeight="300"
+                       styleClass="contenedor-imagen-grande">
+                <ImageView fx:id="imgGuiaGrande"
+                           preserveRatio="true" smooth="true"
+                           styleClass="img-guia-grande"
+                           accessibleText="Guía ampliada del contador Ricoh"/>
+            </StackPane>
+        </VBox>
+    </StackPane>
+</StackPane>

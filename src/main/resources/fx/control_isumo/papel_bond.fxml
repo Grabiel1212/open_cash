@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="views.controllers.control_insumo.PapelBondController"
+      alignment="CENTER"
+      spacing="25"
+      style="-fx-padding: 35;
+             -fx-background-color: #f1f5f9;">
+
+    <!-- CABECERA -->
+    <VBox alignment="CENTER" spacing="8">
+        <Text text="CONTROL DE PAPEL BOND"
+              style="-fx-font-size: 26px;
+                     -fx-font-weight: bold;
+                     -fx-fill: #1e293b;
+                     -fx-font-family: 'Segoe UI';"/>
+
+        <Label text="Registro de lectura inicial y final"
+               style="-fx-font-size: 14px;
+                      -fx-text-fill: #64748b;"/>
+    </VBox>
+
+    <!-- TARJETA PRINCIPAL -->
+    <VBox alignment="CENTER"
+          spacing="22"
+          maxWidth="520"
+          style="-fx-background-color: white;
+                 -fx-padding: 35;
+                 -fx-background-radius: 18;
+                 -fx-border-color: #e2e8f0;
+                 -fx-border-radius: 18;">
+
+        <Label text="REGISTRO DE CONTADOR"
+               style="-fx-font-size: 16px;
+                      -fx-font-weight: bold;
+                      -fx-text-fill: #334155;"/>
+
+        <Label text="Selecciona la acción que deseas realizar."
+               wrapText="true"
+               style="-fx-font-size: 13px;
+                      -fx-text-fill: #64748b;"/>
+
+        <!-- MENSAJE DE ESTADO DINÁMICO (lo actualiza el controller) -->
+        <Label fx:id="lblEstado"
+               wrapText="true"
+               textAlignment="CENTER"
+               maxWidth="440"
+               style="-fx-font-size: 13px;
+                      -fx-text-fill: #64748b;"/>
+
+        <!-- SOLO DOS BOTONES -->
+        <HBox alignment="CENTER"
+              spacing="15">
+
+            <Button fx:id="btnRegistrarInicio"
+                    text="REGISTRAR INICIO"
+                    onAction="#registrarInicio"
+                    prefWidth="205"
+                    prefHeight="48"
+                    style="-fx-background-color: #2563eb;
+                           -fx-text-fill: white;
+                           -fx-font-size: 13px;
+                           -fx-font-weight: bold;
+                           -fx-background-radius: 10;
+                           -fx-cursor: hand;"/>
+
+            <Button fx:id="btnRegistrarCierre"
+                    text="REGISTRAR CIERRE"
+                    onAction="#registrarCierre"
+                    prefWidth="205"
+                    prefHeight="48"
+                    style="-fx-background-color: #059669;
+                           -fx-text-fill: white;
+                           -fx-font-size: 13px;
+                           -fx-font-weight: bold;
+                           -fx-background-radius: 10;
+                           -fx-cursor: hand;"/>
+
+        </HBox>
+
+    </VBox>
+
+</VBox>

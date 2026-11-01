@@ -8,6 +8,7 @@ public class ModoInteligentePrefs {
 
     private static final String KEY_MODO_INTELIGENTE = "modo_inteligente_activo";
     private static final String KEY_IMPRESION_INTELIGENTE = "impresion_inteligente_activo";
+    private static final String KEY_MODULO_PAPEL_BOND = "moduloPapelBondActivo";
 
     public static boolean isModoInteligenteActivo() {
         return prefs.getBoolean(KEY_MODO_INTELIGENTE, false);
@@ -23,5 +24,14 @@ public class ModoInteligentePrefs {
 
     public static void setImpresionInteligenteActiva(boolean activo) {
         prefs.putBoolean(KEY_IMPRESION_INTELIGENTE, activo);
+    }
+
+    // Papel Bond
+    public static boolean isModuloPapelBondActivo() {
+        return prefs.getBoolean(KEY_MODULO_PAPEL_BOND, false);
+    }
+
+    public static void setModuloPapelBondActivo(boolean v) {
+        prefs.putBoolean(KEY_MODULO_PAPEL_BOND, v);
     }
 }

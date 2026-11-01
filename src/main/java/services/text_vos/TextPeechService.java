@@ -268,7 +268,7 @@ public class TextPeechService {
         // - Audio permanente
         // =====================================================
 
-        private static boolean generarAudio(
+        public static boolean generarAudio(
                         String texto,
                         File archivoSalida) {
 
@@ -392,7 +392,7 @@ public class TextPeechService {
         // REPRODUCIR AUDIO
         // =====================================================
 
-        private static void reproducir(
+        public static void reproducir(
                         File archivo) throws Exception {
 
                 if (archivo == null || !archivo.exists()) {

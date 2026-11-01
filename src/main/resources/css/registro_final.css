@@ -1,0 +1,361 @@
+/* =========================================================
+   ROOT
+   ========================================================= */
+.root-panel {
+    -fx-primary: #2563EB;
+    -fx-primary-dark: #1D4ED8;
+    -fx-primary-light: #3B82F6;
+
+    -fx-background-color: linear-gradient(to bottom, #F8FAFC 0%, #EEF2F8 100%);
+    -fx-background-radius: 16;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.18), 20, 0, 0, 6);
+}
+
+/* =========================================================
+   BARRA DE TÍTULO (igual a registro.fxml)
+   ========================================================= */
+.barra-titulo {
+    -fx-background-color: linear-gradient(to bottom right, #3B82F6 0%, #2563EB 55%, #1D4ED8 100%);
+    -fx-background-radius: 16 16 0 0;
+    -fx-padding: 14 16 14 20;
+    -fx-cursor: hand;
+}
+
+.titulo {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.subtitulo {
+    -fx-font-size: 12px;
+    -fx-text-fill: rgba(255, 255, 255, 0.82);
+}
+
+.pista-arrastre {
+    -fx-font-size: 10px;
+    -fx-text-fill: rgba(255, 255, 255, 0.95);
+    -fx-padding: 4 9 4 9;
+    -fx-background-color: rgba(255, 255, 255, 0.18);
+    -fx-background-radius: 10;
+}
+
+.btn-cerrar {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 9 5 9;
+    -fx-cursor: hand;
+}
+.btn-cerrar:hover {
+    -fx-background-color: #DC2626;
+    -fx-text-fill: white;
+}
+
+/* =========================================================
+   CUERPO
+   ========================================================= */
+.cuerpo { -fx-padding: 14 18 16 18; }
+
+/* =========================================================
+   TARJETAS DE SECCIÓN
+   ========================================================= */
+.tarjeta-seccion {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 14 16 16 16;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.05), 8, 0, 0, 2);
+}
+
+.badge-numero {
+    -fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 100%);
+    -fx-background-radius: 12;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 14;
+    -fx-min-width: 42;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.35), 6, 0.1, 0, 2);
+}
+
+.seccion-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.seccion-subtitulo {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: #64748B;
+}
+
+.chip-info {
+    -fx-background-color: #DBEAFE;
+    -fx-background-radius: 999;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10;
+}
+
+/* =========================================================
+   CARDS DE EQUIPO
+   ========================================================= */
+.card-equipo {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 14;
+}
+
+.card-ricoh { -fx-background-color: #EFF6FF; -fx-border-color: #DBEAFE; }
+.card-epson { -fx-background-color: #F0FDF4; -fx-border-color: #DCFCE7; }
+
+.card-equipo:off {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E1;
+    -fx-border-style: dashed;
+}
+.card-equipo:off .label,
+.card-equipo:off .text-field { -fx-opacity: 0.5; }
+
+.equipo-icon {
+    -fx-min-width: 36; -fx-min-height: 36;
+    -fx-max-width: 36; -fx-max-height: 36;
+    -fx-background-radius: 10;
+    -fx-alignment: center;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.15), 4, 0.1, 0, 2);
+}
+.equipo-icon-ricoh { -fx-background-color: linear-gradient(to bottom right, #3B82F6, #1D4ED8); }
+.equipo-icon-epson { -fx-background-color: linear-gradient(to bottom right, #22C55E, #15803D); }
+
+/* =========================================================
+   CHECKBOX (idéntico a registro.fxml)
+   ========================================================= */
+.chk-equipo {
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+.chk-equipo > .box {
+    -fx-background-color: white;
+    -fx-background-radius: 9;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 9;
+    -fx-border-width: 2;
+    -fx-padding: 5;
+}
+.chk-equipo:hover > .box {
+    -fx-border-color: #2563EB;
+    -fx-background-color: #F8FAFC;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.20), 6, 0, 0, 0);
+}
+.chk-equipo:selected > .box {
+    -fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 100%);
+    -fx-border-color: #1D4ED8;
+}
+.chk-equipo:selected > .box > .mark {
+    -fx-background-color: white;
+    -fx-padding: 3;
+    -fx-background-radius: 2;
+}
+.chk-equipo:focused > .box {
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.55), 9, 0, 0, 0);
+}
+
+/* =========================================================
+   TIPOGRAFÍA
+   ========================================================= */
+.tarjeta-titulo {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+.tarjeta-subtitulo {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
+}
+.etiqueta-campo {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+}
+
+.chip-marca {
+    -fx-font-size: 9.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 9;
+    -fx-background-radius: 6;
+}
+.chip-marca-ricoh { -fx-background-color: #DBEAFE; -fx-text-fill: #1D4ED8; }
+.chip-marca-epson { -fx-background-color: #DCFCE7; -fx-text-fill: #166534; }
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+.campo-texto {
+    -fx-pref-height: 36;
+    -fx-font-size: 13.5px;
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 8;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 0 10 0 10;
+}
+.campo-texto:focused {
+    -fx-background-color: white;
+    -fx-border-color: #2563EB;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.20), 6, 0, 0, 0);
+}
+
+/* =========================================================
+   FILAS DE TOTAL
+   ========================================================= */
+.fila-total {
+    -fx-background-radius: 8;
+    -fx-padding: 7 10 7 10;
+}
+.fila-total-ricoh { -fx-background-color: #EFF6FF; }
+.fila-total-epson { -fx-background-color: #F0FDF4; }
+
+.total-etiqueta-ricoh,
+.total-etiqueta-epson {
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+}
+.total-etiqueta-ricoh { -fx-text-fill: #1D4ED8; }
+.total-etiqueta-epson { -fx-text-fill: #15803D; }
+
+.total-valor-ricoh,
+.total-valor-epson {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.total-valor-ricoh { -fx-text-fill: #2563EB; }
+.total-valor-epson { -fx-text-fill: #15803D; }
+
+/* =========================================================
+   HOJAS MALOGRADAS
+   ========================================================= */
+.grupo-hojas {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 12 14 14 14;
+}
+.grupo-hojas:hover {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #DBEAFE;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.06), 6, 0.05, 0, 2);
+}
+
+.grupo-titulo {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+}
+
+.acento-bond       { -fx-background-color: #2563EB; -fx-background-radius: 2; }
+.acento-foto       { -fx-background-color: #8B5CF6; -fx-background-radius: 2; }
+.acento-cartulina  { -fx-background-color: #F59E0B; -fx-background-radius: 2; }
+.acento-especiales { -fx-background-color: #10B981; -fx-background-radius: 2; }
+.acento-tienda     { -fx-background-color: #EC4899; -fx-background-radius: 2; }
+
+.etiqueta-mini {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #64748B;
+    -fx-padding: 0 0 0 2;
+}
+
+.campo-mini {
+    -fx-pref-height: 32;
+    -fx-min-width: 60;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 0 10;
+    -fx-alignment: center-right;
+    -fx-prompt-text-fill: #94A3B8;
+}
+.campo-mini:focused {
+    -fx-background-color: white;
+    -fx-border-color: #2563EB;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.20), 6, 0, 0, 0);
+}
+
+/* =========================================================
+   ACCIONES
+   ========================================================= */
+.estado-borrador {
+    -fx-font-size: 11.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+    -fx-background-color: #DBEAFE;
+    -fx-background-radius: 8;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 8;
+    -fx-padding: 8 14;
+    -fx-alignment: center;
+}
+
+.btn-temporal {
+    -fx-background-color: white;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+    -fx-padding: 15;
+    -fx-cursor: hand;
+}
+.btn-temporal:hover {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #2563EB;
+    -fx-text-fill: #1D4ED8;
+}
+.btn-temporal:pressed {
+    -fx-background-color: #DBEAFE;
+    -fx-border-color: #1D4ED8;
+}
+
+.btn-guardar {
+    -fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 100%);
+    -fx-text-fill: white;
+    -fx-font-size: 13.5px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.35), 10, 0, 0, 3);
+}
+.btn-guardar:hover {
+    -fx-background-color: linear-gradient(to bottom, #2563EB 0%, #1D4ED8 100%);
+}
+.btn-guardar:pressed {
+    -fx-background-color: #1D4ED8;
+}

@@ -1,49 +1,39 @@
 package services.navegador.apertura;
 
-import java.io.File;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.WebSocket;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import helpers.MensajeHelper;
+import services.tunnel.TunnelConfig;
 
 /**
- * Monitor de KeyFacil vía CDP.
+ * Monitor de ventas KeyFácil (page-level).
  *
- * - Captura por EVENTOS (Runtime.consoleAPICalled) → sin polling, sin pérdidas.
- * - Una KeyFacilSession por pestaña (WebSocket persistente, un hilo por tab).
- * - El bucle principal solo crea/destruye sesiones cada 500 ms.
- * - Resistente a cierres de Chrome (reconecta automáticamente).
+ * Toda la configuración/conexión CDP se delega a TunnelConfig
+ * (services.tunnel),
+ * compartida con ChromePrintService. La lógica del monitor NO cambia.
  *
- * FIX (2026): cuando el usuario cierra el navegador visualmente pero quedan
- * procesos chrome.exe "zombie" con el perfil C:\ChromeKeyFacil, un nuevo
- * arranque NO activa el --remote-debugging-port (Chrome se pega al zombie).
- * Ahora: si el puerto 9222 no responde tras esperar, matamos SOLO los
- * chrome.exe cuyo CommandLine contenga "ChromeKeyFacil" y relanzamos.
+ * Se mantienen aquí:
+ * - GSON → KeyFacilSession lo referencia como KeyFacilMonitorService.GSON
+ * - appStartTime() → KeyFacilSession lo usa para filtrar logs viejos
  */
 public class KeyFacilMonitorService {
 
-    private static final int DEBUG_PORT = 9222;
-    private static final String USER_DATA_DIR = "C:\\ChromeKeyFacil";
-    private static final HttpClient HTTP = HttpClient.newHttpClient();
-    private static final Gson GSON = new GsonBuilder().create();
+    /** Delegado: KeyFacilSession usa KeyFacilMonitorService.GSON. */
+    static final Gson GSON = TunnelConfig.GSON;
+
+    private static final long APP_START_TIME = System.currentTimeMillis();
+
+    static long appStartTime() {
+        return APP_START_TIME;
+    }
 
     private final VentaListenerService ventaListener;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -65,7 +55,8 @@ public class KeyFacilMonitorService {
         worker = new Thread(this::buclePrincipal, "KeyFacilMonitor");
         worker.setDaemon(true);
         worker.start();
-        MensajeHelper.info("🟢 Monitor KeyFacil iniciado (background)");
+        MensajeHelper.info("🟢 Monitor KeyFacil iniciado (page-level, puerto "
+                + TunnelConfig.CDP_PROXY_PORT + ")");
     }
 
     public void stop() {
@@ -73,67 +64,39 @@ public class KeyFacilMonitorService {
             return;
         if (worker != null)
             worker.interrupt();
-
         for (KeyFacilSession s : sessions.values())
             s.close();
         sessions.clear();
-
         MensajeHelper.info("🛑 Monitor KeyFacil detenido");
     }
 
-    // =====================================================
-    // BUCLE PRINCIPAL (solo gestiona sesiones)
-    // =====================================================
     private void buclePrincipal() {
         try {
-            if (!asegurarChromeConDebug()) {
-                MensajeHelper.error("Chrome no inició el puerto " + DEBUG_PORT, null);
+            if (!TunnelConfig.disponible()) {
+                MensajeHelper.error("El puente CDP no responde en " + TunnelConfig.CDP_BASE, null);
                 running.set(false);
                 return;
             }
 
-            System.out.println("🔌 Conectando con Chrome (CDP)...");
+            System.out.println("🟢 Conectado a cdp-tunnel → " + TunnelConfig.CDP_BASE + " (page-level)");
 
-            if (!existePestanaKeyFacil()) {
-                crearPestana("https://keyfacil-erp.vitekey.com/#/ventas/nuevo");
-                Thread.sleep(1500);
-            }
-
-            System.out.println();
-            System.out.println("======================================");
-            System.out.println("🟢 CHROME CONECTADO (desde Home)");
-            System.out.println("======================================");
-            System.out.println("👉 Captura por EVENTOS (instantánea)");
-            System.out.println("👉 Abre/cierra pestañas sin perder ventas.");
-            System.out.println("👉 Los comandos Ctrl+PIN+Win siguen activos.");
-            System.out.println();
-            System.out.println("🟢 ESPERANDO PROCESANDO VENTA...");
-            System.out.println();
-
-            boolean chromeEstabaCaido = false;
+            boolean avisoVacio = false;
 
             while (running.get()) {
-                List<Map<String, Object>> targets;
-                try {
-                    targets = obtenerTargets();
-                    if (chromeEstabaCaido) {
-                        System.out.println();
-                        System.out.println("🔄 Chrome reconectado. Reanudando captura...");
-                        chromeEstabaCaido = false;
+                List<Map<String, Object>> targets = TunnelConfig.obtenerTargets();
+
+                if (targets.isEmpty()) {
+                    if (!avisoVacio) {
+                        MensajeHelper.advertencia(
+                                "El túnel responde pero no hay pestañas de KeyFacil.\n" +
+                                        "Abre " + TunnelConfig.URL_NUEVA_VENTA + " en Chrome.");
+                        avisoVacio = true;
                     }
-                } catch (Exception e) {
-                    if (!chromeEstabaCaido) {
-                        System.out.println();
-                        System.out.println("⚠️ Chrome no responde. Esperando reconexión...");
-                        chromeEstabaCaido = true;
-                    }
-                    for (KeyFacilSession s : sessions.values())
-                        s.close();
-                    sessions.clear();
-                    Thread.sleep(1000);
-                    continue;
+                } else {
+                    avisoVacio = false;
                 }
 
+                // 1) Descartar sesiones muertas o cuya pestaña ya no existe
                 Set<String> idsActuales = new HashSet<>();
                 for (Map<String, Object> t : targets) {
                     Object id = t.get("id");
@@ -141,65 +104,54 @@ public class KeyFacilMonitorService {
                         idsActuales.add(id.toString());
                 }
 
-                // Cerrar sesiones huérfanas / muertas
                 Iterator<Map.Entry<String, KeyFacilSession>> it = sessions.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry<String, KeyFacilSession> e = it.next();
-                    KeyFacilSession s = e.getValue();
-                    if (!idsActuales.contains(e.getKey()) || !s.isAlive()) {
-                        s.close();
+                    if (!idsActuales.contains(e.getKey()) || !e.getValue().isAlive()) {
+                        e.getValue().close();
                         it.remove();
+                        System.out.println("🔴 Sesión cerrada: " + e.getKey());
                     }
                 }
 
-                // Crear sesiones nuevas
+                // 2) Crear sesión para cada pestaña nueva de KeyFacil
                 for (Map<String, Object> t : targets) {
+                    Object type = t.get("type");
+                    Object urlObj = t.get("url");
+                    Object idObj = t.get("id");
+                    Object wsObj = t.get("webSocketDebuggerUrl");
+
+                    if (type == null || urlObj == null || idObj == null || wsObj == null)
+                        continue;
+                    if (!"page".equals(type.toString()))
+                        continue;
+                    if (!urlObj.toString().contains(TunnelConfig.KEYFACIL_HOST))
+                        continue;
+
+                    String id = idObj.toString();
+                    if (sessions.containsKey(id))
+                        continue;
+
                     try {
-                        Object type = t.get("type");
-                        Object urlObj = t.get("url");
-                        Object idObj = t.get("id");
-                        Object wsObj = t.get("webSocketDebuggerUrl");
-
-                        if (type == null || urlObj == null || idObj == null || wsObj == null)
-                            continue;
-                        if (!"page".equals(type.toString()))
-                            continue;
-
-                        String url = urlObj.toString();
-                        if (!url.contains("keyfacil-erp.vitekey.com"))
-                            continue;
-
-                        String id = idObj.toString();
-                        String wsUrl = wsObj.toString();
-
-                        if (sessions.containsKey(id))
-                            continue;
-
-                        try {
-                            KeyFacilSession session = new KeyFacilSession(id, wsUrl, ventaListener);
-                            sessions.put(id, session);
-                            session.start();
-
-                            System.out.println();
-                            System.out.println("🟢 Monitor activo en:");
-                            System.out.println("   " + id);
-                            System.out.println("   " + url);
-
-                        } catch (Exception e) {
-                            // Falló: se reintentará en el próximo ciclo
-                        }
-
-                    } catch (Exception ignored) {
+                        KeyFacilSession session = new KeyFacilSession(
+                                id, wsObj.toString(), ventaListener);
+                        sessions.put(id, session);
+                        session.start();
+                        System.out.println("🆕 Sesión creada: " + id.substring(0, 8)
+                                + " → " + urlObj);
+                    } catch (Exception e) {
+                        System.err.println("❌ No se pudo crear sesión " + id.substring(0, 8)
+                                + ": " + e.getMessage());
                     }
                 }
 
-                Thread.sleep(500);
+                Thread.sleep(1000);
             }
 
         } catch (InterruptedException ie) {
             // cierre limpio
         } catch (Exception e) {
-            MensajeHelper.error("Error en monitor KeyFacil: " + e.getMessage(), e);
+            MensajeHelper.error("Error en monitor: " + e.getMessage(), e);
         } finally {
             running.set(false);
             for (KeyFacilSession s : sessions.values())
@@ -208,217 +160,10 @@ public class KeyFacilMonitorService {
         }
     }
 
-    // =====================================================
-    // NUEVO: garantizar Chrome CON debug port
-    // =====================================================
-    /**
-     * Asegura que exista un Chrome accesible por CDP.
-     * - Si el puerto ya responde → true inmediato.
-     * - Si no → lanza Chrome y espera 8 s.
-     * - Si sigue sin responder → mata SOLO los chrome.exe con nuestro
-     * --user-data-dir (zombies) y relanza, esperando hasta 15 s más.
-     */
-    private boolean asegurarChromeConDebug() throws Exception {
-
-        if (chromeDebugDisponible())
-            return true;
-
-        // Intento 1: lanzar Chrome normalmente
-        System.out.println("🟢 Iniciando Chrome con debug...");
-        lanzarChrome();
-
-        if (esperarDebugDisponible(8))
-            return true;
-
-        // Intento 2: había un Chrome zombie con nuestro perfil → matarlo y relanzar
-        System.out.println("⚠️ Puerto " + DEBUG_PORT + " no responde. "
-                + "Matando procesos Chrome con el perfil " + USER_DATA_DIR + "...");
-        matarChromeConNuestroPerfil();
-        Thread.sleep(1500);
-
-        System.out.println("🔄 Relanzando Chrome con debug...");
-        lanzarChrome();
-
-        return esperarDebugDisponible(15);
-    }
-
-    private void lanzarChrome() throws Exception {
-        ProcessBuilder chrome = new ProcessBuilder(
-                obtenerRutaChrome(),
-                "--remote-debugging-port=" + DEBUG_PORT,
-                "--user-data-dir=" + USER_DATA_DIR,
-                "--start-maximized");
-        chrome.start();
-    }
-
-    private boolean esperarDebugDisponible(int segundos) throws InterruptedException {
-        int iteraciones = segundos * 2;
-        for (int i = 0; i < iteraciones; i++) {
-            if (chromeDebugDisponible())
-                return true;
-            Thread.sleep(500);
-        }
-        return chromeDebugDisponible();
-    }
-
-    /**
-     * Mata SOLO los chrome.exe cuyo CommandLine contenga "ChromeKeyFacil".
-     * Usa PowerShell (wmic está deprecado en Windows 11).
-     * No afecta al Chrome personal del usuario.
-     */
-    private void matarChromeConNuestroPerfil() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(
-                    "powershell", "-NoProfile", "-Command",
-                    "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | " +
-                            "Where-Object { $_.CommandLine -like '*ChromeKeyFacil*' } | " +
-                            "ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }");
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-            p.waitFor(8, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            System.err.println("Error matando Chrome zombie: " + e.getMessage());
-        }
-    }
-
-    // =====================================================
-    // CDP HELPERS
-    // =====================================================
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> obtenerTargets() throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(
-                URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json")).build();
-        HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-        return GSON.fromJson(resp.body(), List.class);
-    }
-
-    private boolean existePestanaKeyFacil() throws Exception {
-        for (Map<String, Object> t : obtenerTargets()) {
-            Object type = t.get("type");
-            Object url = t.get("url");
-            if (type != null && url != null
-                    && "page".equals(type.toString())
-                    && url.toString().contains("keyfacil-erp.vitekey.com")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void crearPestana(String url) throws Exception {
-        final WebSocket[] wsRef = new WebSocket[1];
-        final CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
-
-        wsRef[0] = HTTP.newWebSocketBuilder()
-                .buildAsync(URI.create(obtenerBrowserWsUrl()), new WebSocket.Listener() {
-                    final StringBuilder buffer = new StringBuilder();
-
-                    @Override
-                    public void onOpen(WebSocket webSocket) {
-                        webSocket.request(1);
-                    }
-
-                    @Override
-                    public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-                        buffer.append(data);
-                        if (last) {
-                            String msg = buffer.toString();
-                            buffer.setLength(0);
-                            try {
-                                Map<String, Object> parsed = GSON.fromJson(msg, Map.class);
-                                Object idObj = parsed.get("id");
-                                if (idObj instanceof Number && ((Number) idObj).intValue() == 1) {
-                                    future.complete(parsed);
-                                }
-                            } catch (Exception ignored) {
-                            }
-                        }
-                        webSocket.request(1);
-                        return null;
-                    }
-                })
-                .get(5000, TimeUnit.MILLISECONDS);
-
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("url", url);
-
-        Map<String, Object> cmd = new LinkedHashMap<>();
-        cmd.put("id", 1);
-        cmd.put("method", "Target.createTarget");
-        cmd.put("params", params);
-
-        wsRef[0].sendText(GSON.toJson(cmd), true);
-        try {
-            future.get(5000, TimeUnit.MILLISECONDS);
-        } catch (Exception ignored) {
-        }
-        try {
-            wsRef[0].sendClose(WebSocket.NORMAL_CLOSURE, "done");
-        } catch (Exception ignored) {
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private String obtenerBrowserWsUrl() throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(
-                URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json/version")).build();
-        HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-        Map<String, Object> info = GSON.fromJson(resp.body(), Map.class);
-        Object ws = info.get("webSocketDebuggerUrl");
-        if (ws == null)
-            throw new RuntimeException("Sin WebSocket del navegador");
-        return ws.toString();
-    }
-
-    private boolean chromeDebugDisponible() {
-        try {
-            URI uri = URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json/version");
-            HttpURLConnection conexion = (HttpURLConnection) uri.toURL().openConnection();
-            conexion.setConnectTimeout(500);
-            conexion.setReadTimeout(500);
-            conexion.connect();
-            int codigo = conexion.getResponseCode();
-            conexion.disconnect();
-            return codigo == 200;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String obtenerRutaChrome() {
-        String[] rutas = {
-                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-                System.getenv("LOCALAPPDATA") + "\\Google\\Chrome\\Application\\chrome.exe"
-        };
-        for (String ruta : rutas) {
-            if (new File(ruta).exists())
-                return ruta;
-        }
-        throw new RuntimeException("No se encontró Google Chrome.");
-    }
-
-    // =====================================================
-    // API PÚBLICA: abrir/reabrir Chrome
-    // =====================================================
     public void abrirNavegadorKeyFacil() {
-        new Thread(() -> {
-            try {
-                if (!asegurarChromeConDebug()) {
-                    MensajeHelper.error("Chrome no levantó el puerto " + DEBUG_PORT, null);
-                    return;
-                }
-
-                if (!existePestanaKeyFacil()) {
-                    crearPestana("https://keyfacil-erp.vitekey.com/#/ventas/nuevo");
-                    Thread.sleep(1500);
-                }
-
-                MensajeHelper.info("🌐 Navegador KeyFacil abierto");
-
-            } catch (Exception e) {
-                MensajeHelper.error("No se pudo abrir el navegador: " + e.getMessage(), e);
-            }
-        }, "AbrirNavegadorKeyFacil").start();
+        MensajeHelper.info(
+                "Abre esta URL en tu Chrome:\n" +
+                        TunnelConfig.URL_NUEVA_VENTA + "\n\n" +
+                        "El monitor se enganchará automáticamente.");
     }
 }

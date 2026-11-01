@@ -1,11 +1,7 @@
 package services.navegador.impresion;
 
 import java.io.File;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,31 +13,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import helpers.MensajeHelper;
 import services.cash.ConfigManagerDB;
+import services.tunnel.TunnelConfig;
 
-/**
- * Servicio INDEPENDIENTE de impresión automática en KeyFácil.
- *
- * - Levanta Chrome con --kiosk-printing en el puerto CDP 9223.
- * - Perfil propio en C:\ChromePrintKeyFacil (no choca con el del monitor).
- * - Abre /#/ventas/nuevo y clickea el botón IMPRIMIR automáticamente.
- * - Usa la impresora configurada en Home (default de Windows).
- */
 public class ChromePrintService {
 
-    private static final int DEBUG_PORT = 9223;
-    private static final String USER_DATA_DIR = "C:\\ChromePrintKeyFacil";
-    private static final String KEYFACIL_HOST = "keyfacil-erp.vitekey.com";
-    private static final String URL_NUEVA_VENTA = "https://" + KEYFACIL_HOST + "/#/ventas/nuevo";
-
     private static final long REINJECT_MS = 20_000;
-
-    private static final HttpClient HTTP = HttpClient.newHttpClient();
-    private static final Gson GSON = new GsonBuilder().create();
 
     private final ConfigManagerDB configManager;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -52,7 +30,9 @@ public class ChromePrintService {
     private volatile WebSocket ws;
     private volatile boolean wsAlive = false;
     private volatile String tabId;
+    private volatile String sessionId = null;
     private volatile long lastInject = 0;
+    private volatile long lastPrintTs = 0;
 
     public ChromePrintService(ConfigManagerDB configManager) {
         this.configManager = configManager;
@@ -62,16 +42,13 @@ public class ChromePrintService {
         return running.get();
     }
 
-    // =====================================================
-    // CICLO DE VIDA
-    // =====================================================
     public void start() {
         if (!running.compareAndSet(false, true))
             return;
         worker = new Thread(this::bucle, "ChromePrintService");
         worker.setDaemon(true);
         worker.start();
-        MensajeHelper.info("🖨️ ChromePrintService iniciado");
+        MensajeHelper.info("🖨️ ChromePrintService iniciado (túnel CDP " + TunnelConfig.CDP_BASE + ")");
     }
 
     public void stop() {
@@ -86,31 +63,28 @@ public class ChromePrintService {
     public void abrirNavegador() {
         new Thread(() -> {
             try {
-                aplicarImpresoraComoDefault();
-                if (asegurarChrome()) {
-                    asegurarPestanaVentaNueva();
+                if (!TunnelConfig.disponible()) {
+                    MensajeHelper.error("El puente CDP no responde en " + TunnelConfig.CDP_BASE, null);
+                    return;
                 }
+                MensajeHelper.info("Abre esta URL en tu Chrome:\n" + TunnelConfig.URL_NUEVA_VENTA);
             } catch (Exception e) {
-                MensajeHelper.error("No se pudo abrir Chrome (print): " + e.getMessage(), e);
+                MensajeHelper.error("No se pudo abrir la pestaña: " + e.getMessage(), e);
             }
-        }, "AbrirChromePrint").start();
+        }, "AbrirPestanaPrint").start();
     }
 
-    // =====================================================
-    // BUCLE PRINCIPAL
-    // =====================================================
     private void bucle() {
         try {
-            aplicarImpresoraComoDefault();
-
-            if (!asegurarChrome()) {
-                MensajeHelper.error("Chrome (print) no abrió el puerto " + DEBUG_PORT, null);
+            if (!TunnelConfig.disponible()) {
+                MensajeHelper.error("El puente CDP no responde en " + TunnelConfig.CDP_BASE, null);
                 running.set(false);
                 return;
             }
+            System.out.println("🖨️ ChromePrintService conectado al túnel → " + TunnelConfig.CDP_BASE);
+            System.out.println("👉 Esperando pestaña KeyFácil con botón IMPRIMIR...");
 
-            System.out.println("🖨️ ChromePrintService: Chrome listo en puerto " + DEBUG_PORT);
-            System.out.println("👉 Esperando botón IMPRIMIR en " + URL_NUEVA_VENTA);
+            aplicarImpresoraComoDefault();
 
             while (running.get()) {
                 try {
@@ -126,8 +100,10 @@ public class ChromePrintService {
                         lastInject = now;
                     }
 
-                    Thread.sleep(1000);
+                    // Mantenemos el fallback por si el usuario hace Ctrl+P manual
+                    detectarYForzarImpresionTicket();
 
+                    Thread.sleep(1000);
                 } catch (InterruptedException ie) {
                     break;
                 } catch (Exception e) {
@@ -140,9 +116,6 @@ public class ChromePrintService {
                     }
                 }
             }
-
-        } catch (InterruptedException ie) {
-            // salida limpia
         } catch (Exception e) {
             MensajeHelper.error("Error en ChromePrintService: " + e.getMessage(), e);
         } finally {
@@ -151,13 +124,9 @@ public class ChromePrintService {
         }
     }
 
-    // =====================================================
-    // IMPRESORA DEFAULT
-    // =====================================================
     private void aplicarImpresoraComoDefault() {
         if (configManager == null)
             return;
-
         String impresora = null;
         try {
             impresora = configManager.getImpresoraSeleccionada();
@@ -168,239 +137,49 @@ public class ChromePrintService {
             System.out.println("⚠️ ChromePrintService: no hay impresora seleccionada en Home.");
             return;
         }
-
         try {
             String nombreEscapado = impresora.replace("'", "''");
-            String ps = "(New-Object -ComObject WScript.Network).SetDefaultPrinter('"
-                    + nombreEscapado + "')";
-
-            ProcessBuilder pb = new ProcessBuilder(
-                    "powershell", "-NoProfile", "-Command", ps);
+            String ps = "(New-Object -ComObject WScript.Network).SetDefaultPrinter('" + nombreEscapado + "')";
+            ProcessBuilder pb = new ProcessBuilder("powershell", "-NoProfile", "-Command", ps);
             pb.redirectErrorStream(true);
             Process p = pb.start();
             p.waitFor(5, TimeUnit.SECONDS);
-
             System.out.println("🖨️ Impresora default → " + impresora);
         } catch (Exception e) {
             System.err.println("⚠️ No se pudo setear la impresora default: " + e.getMessage());
         }
     }
 
-    // =====================================================
-    // CHROME
-    // =====================================================
-    private boolean asegurarChrome() throws Exception {
-        if (chromeDebugDisponible())
-            return true;
+    private void asegurarPestanaVentaNueva() {
+        List<Map<String, Object>> pestanas = TunnelConfig.pestanasKeyFacil();
+        String first = pestanas.isEmpty() ? null : pestanas.get(0).get("id").toString();
 
-        System.out.println("🟢 Iniciando Chrome (print) en puerto " + DEBUG_PORT + "...");
-        lanzarChrome();
-
-        if (esperarDebugDisponible(8))
-            return true;
-
-        System.out.println("⚠️ Puerto " + DEBUG_PORT + " no responde. Matando Chrome zombie (print)...");
-        matarChromeConNuestroPerfil();
-        Thread.sleep(1500);
-
-        System.out.println("🔄 Relanzando Chrome (print)...");
-        lanzarChrome();
-        return esperarDebugDisponible(15);
-    }
-
-    private void lanzarChrome() throws Exception {
-        ProcessBuilder chrome = new ProcessBuilder(
-                obtenerRutaChrome(),
-                "--remote-debugging-port=" + DEBUG_PORT,
-                "--user-data-dir=" + USER_DATA_DIR,
-                "--kiosk-printing",
-                "--start-maximized",
-                URL_NUEVA_VENTA);
-        chrome.start();
-    }
-
-    private boolean esperarDebugDisponible(int segundos) throws InterruptedException {
-        for (int i = 0; i < segundos * 2; i++) {
-            if (chromeDebugDisponible())
-                return true;
-            Thread.sleep(500);
-        }
-        return chromeDebugDisponible();
-    }
-
-    private void matarChromeConNuestroPerfil() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(
-                    "powershell", "-NoProfile", "-Command",
-                    "Get-CimInstance Win32_Process -Filter \"name='chrome.exe'\" | " +
-                            "Where-Object { $_.CommandLine -like '*ChromePrintKeyFacil*' } | " +
-                            "ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force } catch {} }");
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-            p.waitFor(8, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            System.err.println("Error matando Chrome zombie (print): " + e.getMessage());
-        }
-    }
-
-    private boolean chromeDebugDisponible() {
-        try {
-            HttpURLConnection c = (HttpURLConnection) URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json/version")
-                    .toURL().openConnection();
-            c.setConnectTimeout(500);
-            c.setReadTimeout(500);
-            c.connect();
-            int code = c.getResponseCode();
-            c.disconnect();
-            return code == 200;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private String obtenerRutaChrome() {
-        String[] rutas = {
-                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-                System.getenv("LOCALAPPDATA") + "\\Google\\Chrome\\Application\\chrome.exe"
-        };
-        for (String r : rutas)
-            if (new File(r).exists())
-                return r;
-        throw new RuntimeException("No se encontró Google Chrome.");
-    }
-
-    // =====================================================
-    // PESTAÑA
-    // =====================================================
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> obtenerTargets() throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(
-                URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json")).build();
-        HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-        return GSON.fromJson(resp.body(), List.class);
-    }
-
-    private void asegurarPestanaVentaNueva() throws Exception {
-        List<Map<String, Object>> targets = obtenerTargets();
-
-        String firstKeyFacilTab = null;
         boolean tabIdVive = false;
-
-        for (Map<String, Object> t : targets) {
-            Object type = t.get("type");
-            Object url = t.get("url");
-            Object id = t.get("id");
-            if (type == null || url == null || id == null)
-                continue;
-            if (!"page".equals(type.toString()))
-                continue;
-            if (!url.toString().contains(KEYFACIL_HOST))
-                continue;
-
-            String idStr = id.toString();
-            if (firstKeyFacilTab == null)
-                firstKeyFacilTab = idStr;
-            if (idStr.equals(tabId))
-                tabIdVive = true;
+        if (tabId != null) {
+            for (Map<String, Object> t : pestanas) {
+                if (tabId.equals(t.get("id").toString())) {
+                    tabIdVive = true;
+                    break;
+                }
+            }
         }
 
         if (!tabIdVive) {
-            if (firstKeyFacilTab != null) {
-                tabId = firstKeyFacilTab;
+            if (first != null) {
+                tabId = first;
                 cerrarWs();
             } else {
-                crearPestana(URL_NUEVA_VENTA);
-                Thread.sleep(1500);
+                tabId = null;
             }
         }
     }
 
-    private void crearPestana(String url) throws Exception {
-        final WebSocket[] wsRef = new WebSocket[1];
-        final CompletableFuture<Map<String, Object>> future = new CompletableFuture<>();
-
-        String browserWs = obtenerBrowserWsUrl();
-
-        wsRef[0] = HTTP.newWebSocketBuilder()
-                .buildAsync(URI.create(browserWs), new WebSocket.Listener() {
-                    final StringBuilder buf = new StringBuilder();
-
-                    @Override
-                    public void onOpen(WebSocket w) {
-                        w.request(1);
-                    }
-
-                    @Override
-                    public CompletionStage<?> onText(WebSocket w, CharSequence data, boolean last) {
-                        buf.append(data);
-                        if (last) {
-                            String msg = buf.toString();
-                            buf.setLength(0);
-                            try {
-                                Map<String, Object> p = GSON.fromJson(msg, Map.class);
-                                Object idObj = p.get("id");
-                                if (idObj instanceof Number && ((Number) idObj).intValue() == 1) {
-                                    future.complete(p);
-                                }
-                            } catch (Exception ignored) {
-                            }
-                        }
-                        w.request(1);
-                        return null;
-                    }
-                })
-                .get(5000, TimeUnit.MILLISECONDS);
-
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("url", url);
-
-        Map<String, Object> cmd = new LinkedHashMap<>();
-        cmd.put("id", 1);
-        cmd.put("method", "Target.createTarget");
-        cmd.put("params", params);
-
-        wsRef[0].sendText(GSON.toJson(cmd), true);
-        try {
-            future.get(5000, TimeUnit.MILLISECONDS);
-        } catch (Exception ignored) {
-        }
-        try {
-            wsRef[0].sendClose(WebSocket.NORMAL_CLOSURE, "done");
-        } catch (Exception ignored) {
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private String obtenerBrowserWsUrl() throws Exception {
-        HttpRequest req = HttpRequest.newBuilder(
-                URI.create("http://127.0.0.1:" + DEBUG_PORT + "/json/version")).build();
-        HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
-        Map<String, Object> info = GSON.fromJson(resp.body(), Map.class);
-        Object ws = info.get("webSocketDebuggerUrl");
-        if (ws == null)
-            throw new RuntimeException("Sin WebSocket del navegador");
-        return ws.toString();
-    }
-
-    // =====================================================
-    // WEBSOCKET CDP
-    // =====================================================
     @SuppressWarnings("unchecked")
     private void conectar() throws Exception {
         if (tabId == null)
             return;
 
-        String wsUrl = null;
-        for (Map<String, Object> t : obtenerTargets()) {
-            Object id = t.get("id");
-            if (id != null && id.toString().equals(tabId)) {
-                Object ws = t.get("webSocketDebuggerUrl");
-                if (ws != null)
-                    wsUrl = ws.toString();
-                break;
-            }
-        }
+        String wsUrl = TunnelConfig.buscarWsUrlDePestana(tabId);
         if (wsUrl == null) {
             System.err.println("⚠️ No hay WebSocket para la pestaña " + tabId);
             return;
@@ -409,17 +188,34 @@ public class ChromePrintService {
         idGen.set(0);
         futures.clear();
         lastInject = 0;
+        sessionId = null;
 
-        WebSocket socket = HTTP.newWebSocketBuilder()
+        WebSocket socket = TunnelConfig.HTTP.newWebSocketBuilder()
                 .buildAsync(URI.create(wsUrl), new WsListener())
                 .get(5000, TimeUnit.MILLISECONDS);
 
         this.ws = socket;
         this.wsAlive = true;
 
-        enviar("Runtime.enable", new LinkedHashMap<>(), 3000);
+        Map<String, Object> attach = new LinkedHashMap<>();
+        attach.put("targetId", tabId);
+        attach.put("flatten", true);
+        Map<String, Object> attachResp = enviar("Target.attachToTarget", attach, 3000);
 
-        System.out.println("✅ ChromePrintService conectado a " + tabId);
+        Map<String, Object> attachResult = (Map<String, Object>) attachResp.get("result");
+        if (attachResult == null || !(attachResult.get("sessionId") instanceof String sid)) {
+            throw new RuntimeException("Target.attachToTarget no devolvió sessionId");
+        }
+        this.sessionId = sid;
+
+        enviar("Runtime.enable", new LinkedHashMap<>(), 3000);
+        try {
+            enviar("Page.enable", new LinkedHashMap<>(), 3000);
+        } catch (Exception ignored) {
+        }
+
+        System.out.println("✅ ChromePrintService conectado a " + tabId + " (session "
+                + sid.substring(0, Math.min(8, sid.length())) + ")");
     }
 
     private void cerrarWs() {
@@ -476,7 +272,7 @@ public class ChromePrintService {
     private void handleMessage(String msg) {
         Map<String, Object> parsed;
         try {
-            parsed = GSON.fromJson(msg, Map.class);
+            parsed = TunnelConfig.GSON.fromJson(msg, Map.class);
         } catch (Exception e) {
             return;
         }
@@ -506,6 +302,13 @@ public class ChromePrintService {
                             Object v = m.get("value");
                             if (v instanceof String s && s.startsWith("KF_PRINT_")) {
                                 System.out.println("🖨️ " + s);
+
+                                // 🔑 NUEVO: Cuando el JS intercepta window.print, imprimimos directo sin abrir
+                                // ventana
+                                if ("KF_PRINT_INTERCEPTED".equals(s)) {
+                                    System.out.println("🚀 Disparando impresión directa por CDP...");
+                                    new Thread(this::imprimirTicket80mmPorCDP).start();
+                                }
                             }
                         }
                     }
@@ -514,8 +317,7 @@ public class ChromePrintService {
         }
     }
 
-    private Map<String, Object> enviar(String metodo, Map<String, Object> params, int timeoutMs)
-            throws Exception {
+    private Map<String, Object> enviar(String metodo, Map<String, Object> params, int timeoutMs) throws Exception {
         if (!wsAlive || ws == null)
             throw new RuntimeException("WS no conectado");
 
@@ -528,7 +330,11 @@ public class ChromePrintService {
         cmd.put("method", metodo);
         cmd.put("params", params);
 
-        ws.sendText(GSON.toJson(cmd), true).whenComplete((w, err) -> {
+        if (sessionId != null && !metodo.startsWith("Target.")) {
+            cmd.put("sessionId", sessionId);
+        }
+
+        ws.sendText(TunnelConfig.GSON.toJson(cmd), true).whenComplete((w, err) -> {
             if (err != null) {
                 wsAlive = false;
                 CompletableFuture<Map<String, Object>> f = futures.remove(id);
@@ -545,9 +351,6 @@ public class ChromePrintService {
         }
     }
 
-    // =====================================================
-    // DETECTOR JS
-    // =====================================================
     private void inyectarDetector() {
         String script = """
                 (function() {
@@ -564,14 +367,20 @@ public class ChromePrintService {
                         window.__kfPrintHashHandler = null;
                     }
 
+                    // 🔑 INTERCEPTAR window.print PARA QUE NO ABRA EL PANEL DE CHROME
+                    if (!window.__kfPrintOverridden) {
+                        window.__kfPrintOverridden = true;
+                        window.print = function() {
+                            console.log('KF_PRINT_INTERCEPTED');
+                        };
+                    }
+
                     function enUrlCorrecta() {
-                        return location.hostname === HOST_OK
-                            && location.hash.indexOf(HASH_OK) !== -1;
+                        return location.hostname === HOST_OK && location.hash.indexOf(HASH_OK) !== -1;
                     }
 
                     function intentarImprimir() {
                         if (!enUrlCorrecta()) return;
-
                         var botones = document.querySelectorAll('button.button-option');
                         for (var i = 0; i < botones.length; i++) {
                             var btn = botones[i];
@@ -612,6 +421,195 @@ public class ChromePrintService {
         } catch (Exception e) {
             System.err.println("⚠️ No se pudo inyectar el detector: " + e.getMessage());
             wsAlive = false;
+        }
+    }
+
+    private void detectarYForzarImpresionTicket() {
+        try {
+            List<Map<String, Object>> targets = TunnelConfig.obtenerTargets();
+            boolean hayPreview = false;
+            for (Map<String, Object> t : targets) {
+                Object url = t.get("url");
+                Object type = t.get("type");
+                if (url == null || type == null)
+                    continue;
+                if (!"page".equals(type.toString()))
+                    continue;
+                if (url.toString().startsWith("chrome://print")) {
+                    hayPreview = true;
+                    break;
+                }
+            }
+            if (!hayPreview)
+                return;
+
+            System.out.println("⚠️ Preview nativo detectado (Ctrl+P) → imprimiendo ticket 80mm...");
+            imprimirTicket80mmPorCDP();
+            cerrarPestanasPreview();
+        } catch (Exception e) {
+            System.err.println("detectarYForzarImpresionTicket: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private synchronized void imprimirTicket80mmPorCDP() {
+        if (!wsAlive || ws == null || tabId == null) {
+            System.err.println("❌ WS no conectado, no puedo imprimir ticket.");
+            return;
+        }
+
+        // 🔑 Evitar doble impresión si se dispara muy rápido
+        long now = System.currentTimeMillis();
+        if (now - lastPrintTs < 5000)
+            return;
+        lastPrintTs = now;
+
+        try {
+            Map<String, Object> params = new LinkedHashMap<>();
+            params.put("landscape", false);
+            params.put("displayHeaderFooter", false);
+            params.put("printBackground", true);
+            params.put("preferCSSPageSize", true);
+            params.put("paperWidth", 3.15);
+            params.put("paperHeight", 11.69);
+            params.put("marginTop", 0.0);
+            params.put("marginBottom", 0.0);
+            params.put("marginLeft", 0.0);
+            params.put("marginRight", 0.0);
+            params.put("scale", 1.0);
+
+            Map<String, Object> resultado = enviar("Page.printToPDF", params, 12000);
+            Map<String, Object> result = (Map<String, Object>) resultado.get("result");
+            if (result == null) {
+                System.err.println("❌ printToPDF sin resultado.");
+                return;
+            }
+            String base64Pdf = (String) result.get("data");
+            if (base64Pdf == null || base64Pdf.isEmpty()) {
+                System.err.println("⚠️ No se generó el PDF del ticket.");
+                return;
+            }
+
+            byte[] pdfBytes = java.util.Base64.getDecoder().decode(base64Pdf);
+            File archivoTemporal = File.createTempFile("ticket_keyfacil_", ".pdf");
+            archivoTemporal.deleteOnExit();
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivoTemporal)) {
+                fos.write(pdfBytes);
+            }
+            System.out.println("📄 PDF ticket 80mm generado (" + pdfBytes.length + " bytes)");
+
+            enviarPDFAImpresoraTermica(archivoTemporal);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error imprimiendo ticket 80mm: " + e.getMessage());
+        }
+    }
+
+    private void enviarPDFAImpresoraTermica(File pdfFile) {
+        try {
+            javax.print.PrintService impresora = null;
+            String nombreImpresora = null;
+            if (configManager != null) {
+                try {
+                    nombreImpresora = configManager.getImpresoraSeleccionada();
+                } catch (Exception ignored) {
+                }
+            }
+
+            javax.print.PrintService[] todos = javax.print.PrintServiceLookup.lookupPrintServices(null, null);
+            if (nombreImpresora != null && !nombreImpresora.isBlank()) {
+                for (javax.print.PrintService ps : todos) {
+                    if (ps.getName().equalsIgnoreCase(nombreImpresora)) {
+                        impresora = ps;
+                        break;
+                    }
+                }
+            }
+            if (impresora == null)
+                impresora = javax.print.PrintServiceLookup.lookupDefaultPrintService();
+            if (impresora == null) {
+                System.err.println("⚠️ No se encontró impresora para el ticket.");
+                return;
+            }
+
+            javax.print.attribute.PrintRequestAttributeSet attrs = new javax.print.attribute.HashPrintRequestAttributeSet();
+            javax.print.attribute.standard.MediaSizeName mediaName = javax.print.attribute.standard.MediaSize.findMedia(
+                    80, 297, javax.print.attribute.standard.MediaSize.MM);
+            if (mediaName != null)
+                attrs.add(mediaName);
+
+            attrs.add(new javax.print.attribute.standard.MediaPrintableArea(
+                    0f, 0f, 80f, 297f, javax.print.attribute.standard.MediaPrintableArea.MM));
+            attrs.add(javax.print.attribute.standard.OrientationRequested.PORTRAIT);
+            attrs.add(javax.print.attribute.standard.PrintQuality.NORMAL);
+
+            javax.print.DocPrintJob job = impresora.createPrintJob();
+            javax.print.DocFlavor flavor = javax.print.DocFlavor.INPUT_STREAM.AUTOSENSE;
+            try (java.io.FileInputStream fis = new java.io.FileInputStream(pdfFile)) {
+                javax.print.SimpleDoc doc = new javax.print.SimpleDoc(fis, flavor, null);
+                job.print(doc, attrs);
+            }
+            System.out.println("✅ Ticket 80mm enviado a: " + impresora.getName());
+
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando ticket a impresora: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void cerrarPestanasPreview() {
+        try {
+            for (Map<String, Object> t : TunnelConfig.obtenerTargets()) {
+                Object url = t.get("url");
+                Object id = t.get("id");
+                Object type = t.get("type");
+                if (url == null || id == null || type == null)
+                    continue;
+                if (!"page".equals(type.toString()))
+                    continue;
+                if (!url.toString().startsWith("chrome://print"))
+                    continue;
+                try {
+                    cerrarTarget(id.toString());
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("cerrarPestanasPreview: " + e.getMessage());
+        }
+    }
+
+    private void cerrarTarget(String targetId) throws Exception {
+        final WebSocket[] wsRef = new WebSocket[1];
+        String browserWs = TunnelConfig.obtenerBrowserWsUrl();
+
+        wsRef[0] = TunnelConfig.HTTP.newWebSocketBuilder()
+                .buildAsync(URI.create(browserWs), new WebSocket.Listener() {
+                    @Override
+                    public void onOpen(WebSocket w) {
+                        w.request(1);
+                    }
+
+                    @Override
+                    public CompletionStage<?> onText(WebSocket w, CharSequence d, boolean last) {
+                        w.request(1);
+                        return null;
+                    }
+                }).get(3000, TimeUnit.MILLISECONDS);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("targetId", targetId);
+
+        Map<String, Object> cmd = new LinkedHashMap<>();
+        cmd.put("id", 1);
+        cmd.put("method", "Target.closeTarget");
+        cmd.put("params", params);
+
+        wsRef[0].sendText(TunnelConfig.GSON.toJson(cmd), true);
+        Thread.sleep(150);
+        try {
+            wsRef[0].sendClose(WebSocket.NORMAL_CLOSURE, "bye");
+        } catch (Exception ignored) {
         }
     }
 }

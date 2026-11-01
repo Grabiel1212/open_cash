@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.shape.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="views.controllers.SucursalesController"
+      spacing="0"
+      style="-fx-background-color: #f1f5f9;"
+      stylesheets="@/css/home.css, @/css/sucursales.css" >
+
+    <!-- ══════════ HEADER INTERNO ══════════ -->
+    <VBox spacing="4" style="-fx-padding: 25 30 10 30;">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Text text="Seleccione una sucursal"
+                  style="-fx-font-size: 22px; -fx-font-weight: 900;
+                         -fx-fill: #1e293b; -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnRecargar" text="↻  Recargar"
+                    onAction="#recargarSucursales"
+                    styleClass="elegant-btn-secondary"
+                    prefHeight="36"/>
+        </HBox>
+        <Label text="Elija la sucursal con la que desea operar en esta sesión."
+               style="-fx-font-size: 13px; -fx-text-fill: #64748b;
+                      -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+    </VBox>
+
+    <!-- ══════════ ÁREA DE CARDS CON SCROLL ══════════ -->
+    <StackPane VBox.vgrow="ALWAYS" style="-fx-padding: 5 25 15 25;">
+        <ScrollPane fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    style="-fx-background-color: transparent;
+                           -fx-background: transparent;
+                           -fx-padding: 0;">
+            <FlowPane fx:id="flowSucursales"
+                      hgap="18" vgap="18"
+                      alignment="TOP_LEFT"
+                      style="-fx-padding: 10 5 10 5;"/>
+        </ScrollPane>
+
+        <!-- OVERLAY: CARGANDO -->
+        <StackPane fx:id="loadingOverlay" visible="false"
+                   style="-fx-background-color: rgba(241,245,249,0.85);">
+            <VBox alignment="CENTER" spacing="12">
+                <ProgressIndicator prefWidth="42" prefHeight="42"
+                                   style="-fx-progress-color: #2563eb;"/>
+                <Label text="Cargando sucursales…"
+                       style="-fx-font-size: 13px; -fx-font-weight: 600;
+                              -fx-text-fill: #475569;
+                              -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+            </VBox>
+        </StackPane>
+
+        <!-- OVERLAY: VACÍO -->
+        <StackPane fx:id="emptyOverlay" visible="false" managed="false">
+            <VBox alignment="CENTER" spacing="14">
+                <StackPane>
+                    <Circle radius="40" fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="1.5"/>
+                    <Text text="🏬" style="-fx-font-size: 30px;"/>
+                </StackPane>
+                <Label text="No hay sucursales disponibles"
+                       style="-fx-font-size: 15px; -fx-font-weight: 700;
+                              -fx-text-fill: #475569;
+                              -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+                <Label text="Verifique que existan sucursales activas en el sistema."
+                       style="-fx-font-size: 12px; -fx-text-fill: #94a3b8;
+                              -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+            </VBox>
+        </StackPane>
+    </StackPane>
+
+    <!-- ══════════ FOOTER: SELECCIÓN ACTUAL ══════════ -->
+    <HBox spacing="16" alignment="CENTER_LEFT"
+          style="-fx-padding: 16 30 20 30;
+                 -fx-background-color: #ffffff;
+                 -fx-border-color: #e2e8f0 transparent transparent transparent;
+                 -fx-border-width: 1 0 0 0;">
+        <VBox spacing="2">
+            <Label text="SUCURSAL SELECCIONADA"
+                   style="-fx-font-size: 10px; -fx-font-weight: 800;
+                          -fx-text-fill: #94a3b8;
+                          -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+            <Label fx:id="lblSucursalSeleccionada"
+                   text="— Ninguna —"
+                   style="-fx-font-size: 15px; -fx-font-weight: 700;
+                          -fx-text-fill: #1e293b;
+                          -fx-font-family: 'Inter','Segoe UI', sans-serif;"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="btnConfirmar" text="CONFIRMAR SELECCIÓN"
+                onAction="#confirmarSeleccion"
+                disable="true"
+                prefHeight="42" prefWidth="220"
+                styleClass="elegant-btn-primary"/>
+    </HBox>
+</VBox>

@@ -9,13 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-/**
- * Procesa eventos Runtime.consoleAPICalled y construye el "item" de venta.
- *
- * KeyFacil hace: console.log("🗃️ PROCESANDO VENTA ...", objetoVenta)
- * → llega un STRING + un OBJETO con objectId.
- * → resolvemos el objeto con Runtime.callFunctionOn(JSON.stringify).
- */
 class KeyFacilConsoleProcessor {
 
     private static final Gson GSON = new GsonBuilder().create();
@@ -31,11 +24,11 @@ class KeyFacilConsoleProcessor {
     }
 
     // =====================================================
-    // Manejo del evento console
+    // Entrada por evento (canal push) — normalmente no llega en takeover
     // =====================================================
     @SuppressWarnings("unchecked")
     void handleConsoleEvent(Map<String, Object> params) {
-
+        System.out.println("🎯 [" + session.shortId() + "] consoleAPICalled recibido");
         Object argsObj = params.get("args");
         if (!(argsObj instanceof List<?> argsList))
             return;
@@ -52,11 +45,9 @@ class KeyFacilConsoleProcessor {
             Object valueObj = argMap.get("value");
             Object objIdObj = argMap.get("objectId");
 
-            // --- String: puede contener "PROCESANDO" y/o un JSON embebido ---
             if ("string".equals(typeObj) && valueObj instanceof String s) {
-                if (s.toUpperCase().contains("PROCESANDO")) {
+                if (s.toUpperCase().contains("PROCESANDO"))
                     menciona = true;
-                }
                 String cand = extraerJson(s);
                 if (cand != null) {
                     try {
@@ -69,9 +60,7 @@ class KeyFacilConsoleProcessor {
                     } catch (Exception ignored) {
                     }
                 }
-            }
-            // --- Objeto JS: guardamos su objectId para resolverlo después ---
-            else if ("object".equals(typeObj) && objIdObj instanceof String oid) {
+            } else if ("object".equals(typeObj) && objIdObj instanceof String oid) {
                 objectId = oid;
             }
         }
@@ -79,13 +68,11 @@ class KeyFacilConsoleProcessor {
         if (!menciona)
             return;
 
-        // Caso A: el JSON ya venía como string → procesar directo
         if (jsonStr != null) {
             procesarJsonStr(jsonStr);
             return;
         }
 
-        // Caso B: hay un objeto JS → pedirle a Chrome que lo stringifique
         if (objectId != null) {
             final String oid = objectId;
             session.fetchObjectAsJson(oid, jsonFromObject -> {
@@ -102,11 +89,49 @@ class KeyFacilConsoleProcessor {
     }
 
     // =====================================================
-    // Procesar el JSON ya extraído
+    // Entrada por polling (canal pull) — la que sí funciona
+    // =====================================================
+    void procesarDesdePolling(java.util.List<String> args) {
+        if (args == null || args.isEmpty())
+            return;
+
+        boolean menciona = false;
+        String jsonStr = null;
+
+        for (String s : args) {
+            if (s == null)
+                continue;
+            if (s.toUpperCase().contains("PROCESANDO"))
+                menciona = true;
+            String cand = extraerJson(s);
+            if (cand != null) {
+                try {
+                    Map<String, Object> p = GSON.fromJson(cand, Map.class);
+                    if (p != null && p.containsKey("lista_metodos_pago")) {
+                        if (jsonStr == null || cand.length() > jsonStr.length()) {
+                            jsonStr = cand;
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        if (!menciona)
+            return;
+
+        if (jsonStr != null) {
+            procesarJsonStr(jsonStr);
+        } else {
+            System.out.println("⚠️ [" + session.shortId() + "] PROCESANDO sin payload (polling)");
+        }
+    }
+
+    // =====================================================
+    // Procesar JSON
     // =====================================================
     @SuppressWarnings("unchecked")
     private void procesarJsonStr(String jsonStr) {
-
         if (yaProcesado(jsonStr)) {
             System.out.println("⏭️ [" + session.shortId() + "] duplicado ignorado");
             return;
@@ -139,9 +164,8 @@ class KeyFacilConsoleProcessor {
     // =====================================================
     private String extraerJson(String s) {
         String trimmed = s.trim();
-        if (trimmed.startsWith("{")) {
+        if (trimmed.startsWith("{"))
             return trimmed;
-        }
         int idx = trimmed.indexOf('{');
         if (idx != -1) {
             String sub = trimmed.substring(idx).trim();
@@ -156,7 +180,6 @@ class KeyFacilConsoleProcessor {
     // =====================================================
     @SuppressWarnings("unchecked")
     private Map<String, Object> construirVenta(Map<String, Object> v) {
-
         if (v == null)
             return null;
 
@@ -182,11 +205,6 @@ class KeyFacilConsoleProcessor {
             if (idSerie == null && serieDesc == null)
                 return null;
 
-            // Hash fuerte del JSON COMPLETO.
-            // Resuelve el bug del ERP que manda SIEMPRE la misma fecha_emision_utc,
-            // lo que causaba que ventas distintas con mismo total/cliente/serie
-            // generaran la misma clave FB: y la segunda se descartara por dedup.
-            // Gson garantiza orden estable para Map → el hash es determinista.
             String jsonCompleto = GSON.toJson(v);
             String huella = Integer.toHexString(jsonCompleto.hashCode());
 
@@ -250,7 +268,6 @@ class KeyFacilConsoleProcessor {
                     metodoMarcadoEfectivo = true;
                 }
                 boolean descripcionEsEfectivo = desc.toLowerCase().contains("efectivo");
-
                 boolean estePagoEsEfectivo = (metodoMarcadoEfectivo || descripcionEsEfectivo);
 
                 System.out.println("💳 [" + session.shortId() + "] pago → desc='" + desc
@@ -268,7 +285,7 @@ class KeyFacilConsoleProcessor {
         }
 
         item.put("detallePagos", detallePagos);
-        item.put("montosPagos", montosPago);
+        item.put("montosPago", montosPago);
         item.put("esEfectivo", esEfectivo);
         item.put("pago", !detallePagos.isEmpty() ? String.join(" + ", detallePagos) : "DESCONOCIDO");
 

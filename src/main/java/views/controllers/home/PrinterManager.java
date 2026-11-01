@@ -5,6 +5,7 @@ import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.SimpleDoc;
 
+import helpers.AlertaHelper;
 import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,7 +14,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import services.cash.ConfigManagerDB;
-import views.alerts.AlertHelper;
 
 public class PrinterManager {
 
@@ -61,14 +61,23 @@ public class PrinterManager {
             String seleccionada = cmb.getValue();
             if (seleccionada == null || seleccionada.isEmpty()) {
                 AnimationUtils.animarError(cmb);
-                AlertHelper.mostrar("Advertencia", "Por favor seleccione una impresora.",
-                        AlertHelper.AlertType.WARNING);
+                AlertaHelper.mostrar(
+                        "Advertencia",
+                        "Por favor seleccione una impresora.",
+                        AlertaHelper.AlertType.WARNING);
                 return;
             }
             configManager.guardarImpresoraSeleccionada(seleccionada);
-            AlertHelper.mostrar("Listo", "Impresora predeterminada: " + seleccionada, AlertHelper.AlertType.INFO);
+            AlertaHelper.mostrar(
+                    "Listo",
+                    "Impresora predeterminada: " + seleccionada,
+                    AlertaHelper.AlertType.SUCCESS);
         } catch (Exception e) {
-            AlertHelper.mostrar("Error", "No se pudo guardar la impresora seleccionada.", AlertHelper.AlertType.ERROR);
+            AlertaHelper.mostrar(
+                    "Error",
+                    "No se pudo guardar la impresora seleccionada.\n"
+                            + "Detalle: " + e.getMessage(),
+                    AlertaHelper.AlertType.ERROR);
         }
     }
 
@@ -89,7 +98,8 @@ public class PrinterManager {
             }
 
             if (impresora == null) {
-                System.out.println("❌ No se encontró la impresora configurada: " + impresoraSeleccionada);
+                System.err.println(
+                        "❌ No se encontró la impresora configurada: " + impresoraSeleccionada);
                 return;
             }
 
@@ -106,11 +116,12 @@ public class PrinterManager {
             SimpleDoc doc = new SimpleDoc(openDrawerCmd, DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
             job.print(doc, null);
 
-            System.out.println("✅ Comando enviado a la impresora para abrir caja: " + impresora.getName());
+            System.out.println(
+                    "✅ Comando enviado a la impresora para abrir caja: " + impresora.getName());
 
         } catch (Exception e) {
-            e.printStackTrace();
             System.err.println("❌ Error al intentar abrir la caja: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

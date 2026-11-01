@@ -41,4 +41,5 @@ public interface EmpleadoRepository {
     Boolean crearPin(Long idEmpleado, String pin);
 
     Boolean existePin(Long idEmpleado);
+
 }

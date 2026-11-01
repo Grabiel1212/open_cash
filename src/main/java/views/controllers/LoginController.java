@@ -1,8 +1,8 @@
-
 package views.controllers;
 
 import java.io.IOException;
 
+import helpers.AlertaHelper;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,7 +17,6 @@ import javafx.stage.StageStyle;
 import model.Empleado;
 import services.sql.EmpleadoService;
 import services.text_vos.TextPeechService;
-import views.alerts.AlertHelper;
 import views.icons.Icons;
 
 public class LoginController {
@@ -146,25 +145,23 @@ public class LoginController {
                 });
 
                 // =================================================
-                // SOLO NÚMEROS EN DNI
+                // SOLO NÚMEROS EN DNI (máx. 8)
                 // =================================================
 
                 txtDni.textProperty().addListener(
                                 (observable, oldValue, newValue) -> {
 
-                                        // Eliminar cualquier carácter que no sea número
+                                        // Si contiene algo que no sea dígito → limpiar
                                         if (!newValue.matches("\\d*")) {
-
                                                 txtDni.setText(
                                                                 newValue.replaceAll("[^\\d]", ""));
+                                                return;
                                         }
 
                                         // Máximo 8 dígitos
-                                        if (txtDni.getText().length() > 8) {
-
+                                        if (newValue.length() > 8) {
                                                 txtDni.setText(
-                                                                txtDni.getText()
-                                                                                .substring(0, 8));
+                                                                newValue.substring(0, 8));
                                         }
                                 });
         }
@@ -188,10 +185,10 @@ public class LoginController {
 
                 if (dni.isEmpty()) {
 
-                        AlertHelper.mostrar(
+                        AlertaHelper.mostrar(
                                         "DNI requerido",
                                         "Por favor, ingrese su número de DNI.",
-                                        AlertHelper.AlertType.WARNING);
+                                        AlertaHelper.AlertType.WARNING);
 
                         txtDni.requestFocus();
 
@@ -204,10 +201,10 @@ public class LoginController {
 
                 if (dni.length() != 8) {
 
-                        AlertHelper.mostrar(
+                        AlertaHelper.mostrar(
                                         "DNI incorrecto",
                                         "El DNI debe tener exactamente 8 dígitos.",
-                                        AlertHelper.AlertType.WARNING);
+                                        AlertaHelper.AlertType.WARNING);
 
                         txtDni.requestFocus();
 
@@ -228,10 +225,10 @@ public class LoginController {
 
                         if (empleado == null) {
 
-                                AlertHelper.mostrar(
+                                AlertaHelper.mostrar(
                                                 "Acceso denegado",
                                                 "El DNI no está registrado o el empleado está inactivo.",
-                                                AlertHelper.AlertType.ERROR);
+                                                AlertaHelper.AlertType.ERROR);
 
                                 txtDni.clear();
 
@@ -281,12 +278,16 @@ public class LoginController {
 
                 } catch (Exception e) {
 
+                        // Log técnico para el desarrollador
+                        System.err.println("❌ Error en login: " + e.getMessage());
                         e.printStackTrace();
 
-                        AlertHelper.mostrar(
+                        // Mensaje limpio para el usuario
+                        AlertaHelper.mostrar(
                                         "Error de conexión",
-                                        "No se pudo conectar con la base de datos.",
-                                        AlertHelper.AlertType.ERROR);
+                                        "No se pudo conectar con la base de datos.\n"
+                                                        + "Verifica tu red o contacta al administrador.",
+                                        AlertaHelper.AlertType.ERROR);
                 }
         }
 
@@ -311,8 +312,7 @@ public class LoginController {
                         // =================================================
 
                         String texto = "Bienvenido, "
-                                        + nombre
-                                        ;
+                                        + nombre;
 
                         // =================================================
                         // EJECUTAR AUDIO EN SEGUNDO PLANO
@@ -443,10 +443,11 @@ public class LoginController {
                 } catch (IOException e) {
                         e.printStackTrace();
 
-                        AlertHelper.mostrar(
+                        AlertaHelper.mostrar(
                                         "Error",
-                                        "No se pudo cargar la ventana principal.",
-                                        AlertHelper.AlertType.ERROR);
+                                        "No se pudo cargar la ventana principal.\n"
+                                                        + "Detalle: " + e.getMessage(),
+                                        AlertaHelper.AlertType.ERROR);
                 }
         }
 }

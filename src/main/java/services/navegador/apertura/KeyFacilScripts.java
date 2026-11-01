@@ -1,11 +1,5 @@
 package services.navegador.apertura;
 
-/**
- * Hook idempotente pero RE-INSTALABLE:
- * ya no usamos una bandera global. Comprobamos console.X.__keyfacilWrapped.
- * Así, si KeyFacil sobrescribe console.log en runtime, lo volvemos a envolver
- * en la siguiente pasada (cada 1s) o al detectar un nuevo execution context.
- */
 final class KeyFacilScripts {
 
     private KeyFacilScripts() {
@@ -13,23 +7,52 @@ final class KeyFacilScripts {
 
     static final String CONSOLE_HOOK = """
             (function() {
-                const metodos = ['log', 'info', 'warn', 'error', 'debug'];
+                if (!Array.isArray(window.__keyfacilLogs)) window.__keyfacilLogs = [];
 
-                metodos.forEach(function(nombre) {
+                function stringifySeguro(a) {
+                    if (a === null || a === undefined) return String(a);
+                    const t = typeof a;
+                    if (t === 'string') return a;
+                    if (t === 'number' || t === 'boolean') return String(a);
+                    if (t === 'bigint') return a.toString() + 'n';
+                    if (t === 'function') return '[Function]';
+                    if (t === 'symbol') return a.toString();
+                    if (a instanceof Error) {
+                        return JSON.stringify({ name: a.name, message: a.message, stack: a.stack });
+                    }
+                    const seen = new WeakSet();
+                    try {
+                        return JSON.stringify(a, function(k, v) {
+                            if (typeof v === 'bigint') return v.toString();
+                            if (typeof v === 'function') return undefined;
+                            if (typeof v === 'symbol') return v.toString();
+                            if (typeof v === 'object' && v !== null) {
+                                if (seen.has(v)) return '[Circular]';
+                                seen.add(v);
+                            }
+                            return v;
+                        });
+                    } catch(e) {
+                        return '[Unserializable:' + (e && e.message) + ']';
+                    }
+                }
+
+                // 🔑 Guard POR MÉTODO (no global): si alguien sobrescribe console.log,
+                // la próxima pasada lo vuelve a envolver sin tocar los demás.
+                ['log','info','warn','error','debug'].forEach(function(nombre) {
                     const actual = console[nombre];
                     if (actual && actual.__keyfacilWrapped) return;
-
                     const original = actual;
-
                     const wrapper = function() {
                         const args = Array.prototype.slice.call(arguments);
-                        const stringified = args.map(function(a) {
-                            if (typeof a === 'string') return a;
-                            if (a === null || a === undefined) return String(a);
-                            if (typeof a === 'number' || typeof a === 'boolean') return String(a);
-                            try { return JSON.stringify(a); } catch(e) { return String(a); }
-                        });
-                        try { original.apply(console, stringified); } catch(e) {}
+                        const str = args.map(stringifySeguro);
+                        try {
+                            window.__keyfacilLogs.push({ t: Date.now(), m: nombre, a: str });
+                            if (window.__keyfacilLogs.length > 200) {
+                                window.__keyfacilLogs.splice(0, window.__keyfacilLogs.length - 200);
+                            }
+                        } catch(e) {}
+                        try { original.apply(console, str); } catch(e) {}
                     };
                     wrapper.__keyfacilWrapped = true;
                     console[nombre] = wrapper;

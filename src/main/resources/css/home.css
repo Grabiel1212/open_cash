@@ -39,7 +39,6 @@
     -fx-text-fill: white;
 }
 
-/* ==== BOTÓN DE SALIR (NUEVO) ==== */
 .elegant-window-btn-exit {
     -fx-background-color: transparent;
     -fx-text-fill: #cbd5e1;
@@ -64,7 +63,6 @@
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.25), 10, 0, 0, 2);
-    -fx-transition: all 0.3s ease;
 }
 .elegant-btn-primary:hover {
     -fx-background-color: #1d4ed8;
@@ -127,21 +125,14 @@
     -fx-text-fill: #1e293b;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 1);
 }
-.elegant-combo:hover {
-    -fx-border-color: #94a3b8;
-}
+.elegant-combo:hover   { -fx-border-color: #94a3b8; }
 .elegant-combo:focused {
     -fx-border-color: #2563eb;
     -fx-effect: dropshadow(gaussian, rgba(37, 99, 235, 0.1), 8, 0, 0, 2);
 }
-.elegant-combo .arrow-button {
-    -fx-background-color: transparent;
-}
-.elegant-combo .arrow {
-    -fx-background-color: #64748b;
-}
+.elegant-combo .arrow-button { -fx-background-color: transparent; }
+.elegant-combo .arrow         { -fx-background-color: #64748b; }
 
-/* ==== POPUP DE COMBOBOX ==== */
 .combo-box-popup .list-view {
     -fx-background-color: white;
     -fx-background-radius: 8;
@@ -164,4 +155,158 @@
 .combo-box-popup .list-view .list-cell:filled:selected {
     -fx-background-color: #2563eb;
     -fx-text-fill: white;
+}
+
+/* ============================================ */
+/* SIDEBAR DE MENÚS - DISEÑO ELEGANTE           */
+/* ============================================ */
+.elegant-sidebar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20 14;
+    -fx-border-color: transparent #e2e8f0 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 8, 0, 2, 0);
+}
+
+.sidebar-heading {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #94a3b8;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+    -fx-padding: 4 8 10 8;
+}
+
+.sidebar-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
+    -fx-padding: 12 14;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-color: transparent;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.sidebar-item:hover {
+    -fx-background-color: #eff6ff;
+    -fx-border-color: #bfdbfe;
+}
+
+.sidebar-item:pressed {
+    -fx-background-color: #dbeafe;
+}
+
+.sidebar-item-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.sidebar-item-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* ==== SEPARADOR DEL SIDEBAR ==== */
+.sidebar-separator {
+    -fx-background-color: linear-gradient(to right, transparent, #e2e8f0, transparent);
+    -fx-pref-height: 1;
+    -fx-max-height: 1;
+    -fx-padding: 0;
+}
+
+/* ==== BOTÓN CERRAR SESIÓN (ÁMBAR - volver al login) ==== */
+.sidebar-item-logout {
+    -fx-background-color: #fffbeb;
+    -fx-background-radius: 12;
+    -fx-border-color: #fde68a;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-padding: 11 16;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);
+}
+.sidebar-item-logout:hover {
+    -fx-background-color: #f59e0b;
+    -fx-border-color: #d97706;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.45), 14, 0, 0, 4);
+    -fx-translate-y: -1;
+}
+.sidebar-item-logout:pressed {
+    -fx-background-color: #d97706;
+    -fx-translate-y: 0;
+}
+.sidebar-item-logout .logout-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #b45309;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.sidebar-item-logout .logout-sub {
+    -fx-font-size: 10px;
+    -fx-text-fill: #d97706;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.sidebar-item-logout:hover .logout-title,
+.sidebar-item-logout:hover .logout-sub {
+    -fx-text-fill: white;
+}
+
+/* ==== BOTÓN SALIR (ROJO - cerrar la app entera) ==== */
+.sidebar-item-salir {
+    -fx-background-color: #fef2f2;
+    -fx-background-radius: 12;
+    -fx-border-color: #fecaca;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 12;
+    -fx-padding: 11 16;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 4, 0, 0, 1);
+}
+.sidebar-item-salir:hover {
+    -fx-background-color: #dc2626;
+    -fx-border-color: #b91c1c;
+    -fx-effect: dropshadow(gaussian, rgba(220, 38, 38, 0.45), 14, 0, 0, 4);
+    -fx-translate-y: -1;
+}
+.sidebar-item-salir:pressed {
+    -fx-background-color: #b91c1c;
+    -fx-translate-y: 0;
+}
+.sidebar-item-salir .exit-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #b91c1c;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.sidebar-item-salir .exit-sub {
+    -fx-font-size: 10px;
+    -fx-text-fill: #dc2626;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.sidebar-item-salir:hover .exit-title,
+.sidebar-item-salir:hover .exit-sub {
+    -fx-text-fill: white;
+}
+
+/* ==== FOOTER DEL SIDEBAR ==== */
+.sidebar-footer {
+    -fx-padding: 10 8 4 8;
+    -fx-alignment: CENTER;
+}
+.sidebar-footer-brand {
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1e293b;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+.sidebar-footer-version {
+    -fx-font-size: 9px;
+    -fx-text-fill: #94a3b8;
+    -fx-font-family: 'Inter', 'Segoe UI', sans-serif;
+    -fx-font-weight: 500;
 }

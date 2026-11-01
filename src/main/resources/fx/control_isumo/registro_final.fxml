@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootStack"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="views.controllers.control_insumo.RegistroFinalController"
+           prefWidth="1180"
+           prefHeight="740"
+           stylesheets="@/css/registro_final.css">
+
+    <VBox fx:id="rootVentana" styleClass="root-panel" spacing="0">
+
+        <!-- ================= BARRA DE TÍTULO ================= -->
+        <HBox fx:id="barraTitulo"
+              styleClass="barra-titulo"
+              alignment="CENTER_LEFT"
+              spacing="14"
+              onMousePressed="#iniciarArrastre"
+              onMouseDragged="#arrastrarVentana"
+              onMouseReleased="#terminarArrastre">
+
+            <VBox spacing="1">
+                <Label text="Registro final" styleClass="titulo"/>
+                <Label text="Cierre de turno · contadores + hojas malogradas"
+                       styleClass="subtitulo"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Arrastra para mover" styleClass="pista-arrastre"/>
+
+            <Button fx:id="btnCerrar"
+                    text="✕"
+                    styleClass="btn-cerrar"
+                    onAction="#solicitarCierre"/>
+        </HBox>
+
+        <!-- ================= CUERPO ================= -->
+        <HBox spacing="14" VBox.vgrow="ALWAYS" styleClass="cuerpo">
+
+            <!-- ============ COLUMNA IZQUIERDA: CONTADORES ============ -->
+            <VBox spacing="14" prefWidth="480" HBox.hgrow="ALWAYS">
+
+                <VBox styleClass="tarjeta-seccion" spacing="14" VBox.vgrow="ALWAYS">
+
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="01" styleClass="badge-numero"/>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Contadores de equipos" styleClass="seccion-titulo"/>
+                            <Label text="Marca los equipos que vas a registrar"
+                                   styleClass="seccion-subtitulo"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- RICOH -->
+                    <VBox fx:id="panelRicoh" styleClass="card-equipo card-ricoh" spacing="12">
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="R" styleClass="equipo-icon equipo-icon-ricoh"/>
+                            <VBox spacing="1" HBox.hgrow="ALWAYS">
+                                <Label text="Fotocopiadora Ricoh" styleClass="tarjeta-titulo"/>
+                                <Label text="Contadores separados" styleClass="tarjeta-subtitulo"/>
+                            </VBox>
+                            <Label text="RICOH" styleClass="chip-marca chip-marca-ricoh"/>
+                            <CheckBox fx:id="chkRicoh" selected="true" styleClass="chk-equipo"/>
+                        </HBox>
+
+                        <VBox fx:id="contenidoRicoh" spacing="10">
+                            <HBox spacing="10">
+                                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                    <Label text="Blanco y negro (B/N)" styleClass="etiqueta-campo"/>
+                                    <TextField fx:id="txtRicohBn" promptText="Contador B/N"
+                                               styleClass="campo-texto" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                    <Label text="Color" styleClass="etiqueta-campo"/>
+                                    <TextField fx:id="txtRicohColor" promptText="Contador color"
+                                               styleClass="campo-texto" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="8"
+                                  styleClass="fila-total fila-total-ricoh">
+                                <Label text="TOTAL" styleClass="total-etiqueta-ricoh"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="lblRicohTotal" text="Total: 0"
+                                       styleClass="total-valor-ricoh"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+
+                    <!-- EPSON -->
+                    <VBox fx:id="panelEpson" styleClass="card-equipo card-epson" spacing="12">
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="E" styleClass="equipo-icon equipo-icon-epson"/>
+                            <VBox spacing="1" HBox.hgrow="ALWAYS">
+                                <Label text="Impresora Epson" styleClass="tarjeta-titulo"/>
+                                <Label text="Contador general de impresiones"
+                                       styleClass="tarjeta-subtitulo"/>
+                            </VBox>
+                            <Label text="EPSON" styleClass="chip-marca chip-marca-epson"/>
+                            <CheckBox fx:id="chkEpson" selected="true" styleClass="chk-equipo"/>
+                        </HBox>
+
+                        <VBox fx:id="contenidoEpson" spacing="10">
+                            <VBox spacing="5">
+                                <Label text="Contador total" styleClass="etiqueta-campo"/>
+                                <TextField fx:id="txtEpsonBn"
+                                           promptText="Introduce el contador general"
+                                           styleClass="campo-texto"
+                                           maxWidth="Infinity"/>
+                                <TextField fx:id="txtEpsonColor"
+                                           visible="false" managed="false"
+                                           maxHeight="0" prefHeight="0"/>
+                            </VBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="8"
+                                  styleClass="fila-total fila-total-epson">
+                                <Label text="TOTAL GENERAL" styleClass="total-etiqueta-epson"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="lblEpsonTotal" text="Total: 0"
+                                       styleClass="total-valor-epson"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </VBox>
+
+            <!-- ============ COLUMNA DERECHA: HOJAS MALOGRADAS ============ -->
+            <VBox spacing="14" prefWidth="640" minWidth="560" HBox.hgrow="ALWAYS">
+
+                <VBox styleClass="tarjeta-seccion" spacing="14" VBox.vgrow="ALWAYS">
+
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="02" styleClass="badge-numero"/>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Hojas malogradas" styleClass="seccion-titulo"/>
+                            <Label text="Registra cantidades por tipo y tamaño"
+                                   styleClass="seccion-subtitulo"/>
+                        </VBox>
+                        <Label text="CANTIDADES" styleClass="chip-info"/>
+                    </HBox>
+
+                    <GridPane hgap="10" vgap="10" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <VBox GridPane.columnIndex="0" GridPane.rowIndex="0"
+                              styleClass="grupo-hojas" spacing="8">
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Region styleClass="acento-bond" prefWidth="3" prefHeight="12"/>
+                                <Label text="Papel bond" styleClass="grupo-titulo"/>
+                            </HBox>
+                            <HBox spacing="8">
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtBondA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A3" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtBondA3" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="1" GridPane.rowIndex="0"
+                              styleClass="grupo-hojas" spacing="8">
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Region styleClass="acento-foto" prefWidth="3" prefHeight="12"/>
+                                <Label text="Papel fotográfico" styleClass="grupo-titulo"/>
+                            </HBox>
+                            <HBox spacing="8">
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtFotoA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A3" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtFotoA3" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A6" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtFotoA6" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="0" GridPane.rowIndex="1"
+                              styleClass="grupo-hojas" spacing="8">
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Region styleClass="acento-cartulina" prefWidth="3" prefHeight="12"/>
+                                <Label text="Papel cartulina" styleClass="grupo-titulo"/>
+                            </HBox>
+                            <HBox spacing="8">
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtCartulinaA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="A3" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtCartulinaA3" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="1" GridPane.rowIndex="1"
+                              styleClass="grupo-hojas" spacing="8">
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Region styleClass="acento-especiales" prefWidth="3" prefHeight="12"/>
+                                <Label text="Otros especiales" styleClass="grupo-titulo"/>
+                            </HBox>
+                            <HBox spacing="8">
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="Opalina A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtOpalinaA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="Adhesivo A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtAdhesivoA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <Label text="Vinil A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtVinilA4" promptText="0"
+                                               styleClass="campo-mini" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="0" GridPane.rowIndex="2"
+                              GridPane.columnSpan="2"
+                              styleClass="grupo-hojas" spacing="8">
+                            <HBox alignment="CENTER_LEFT" spacing="6">
+                                <Region styleClass="acento-tienda" prefWidth="3" prefHeight="12"/>
+                                <Label text="Uso para la tienda — papel bond"
+                                       styleClass="grupo-titulo"/>
+                            </HBox>
+                            <HBox spacing="8">
+                                <VBox spacing="3">
+                                    <Label text="A4" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtTiendaBondA4" promptText="0"
+                                               styleClass="campo-mini"
+                                               minWidth="70" prefWidth="90"/>
+                                </VBox>
+                                <VBox spacing="3">
+                                    <Label text="A3" styleClass="etiqueta-mini"/>
+                                    <TextField fx:id="txtTiendaBondA3" promptText="0"
+                                               styleClass="campo-mini"
+                                               minWidth="70" prefWidth="90"/>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <!-- ZONA DE ACCIONES -->
+                <VBox spacing="10">
+                    <Label fx:id="lblEstadoBorrador"
+                           text=""
+                           styleClass="estado-borrador"
+                           visible="false" managed="false"
+                           maxWidth="Infinity"/>
+
+                    <HBox spacing="10">
+                        <Button fx:id="btnGuardarTemporal"
+                                text="Guardar temporal"
+                                onAction="#guardarTemporal"
+                                styleClass="btn-temporal"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button fx:id="btnGuardarFinal"
+                                text="✓  Guardar final"
+                                onAction="#guardarFinal"
+                                styleClass="btn-guardar"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </HBox>
+    </VBox>
+</StackPane>
